@@ -10,49 +10,75 @@ class InventoryService {
     final queryParams = status != null && status != 'All' ? '?status=${status.toLowerCase()}' : '';
     final response = await _apiService.get('/inventory$queryParams');
 
-    if (response != null && response['success'] == true && response['data'] != null) {
-      final List<dynamic> data = response['data'];
-      return data.map((json) => UnitModel.fromJson(json)).toList();
+    if (response is List) {
+      return response
+          .whereType<Map<String, dynamic>>()
+          .map((json) => UnitModel.fromJson(json))
+          .toList();
+    }
+    if (response is Map<String, dynamic>) {
+      var data = response['data'] ?? response['units'] ?? response['inventory'] ?? response['list'];
+      if (data is Map<String, dynamic>) {
+        data = data['items'] ?? data['units'] ?? data['inventory'] ?? data['plots'] ?? data['data'] ?? data['list'];
+      }
+      if (data is List) {
+        return data
+            .whereType<Map<String, dynamic>>()
+            .map((json) => UnitModel.fromJson(json))
+            .toList();
+      }
     }
     return [];
   }
 
   Future<UnitModel?> getUnitById(int id) async {
     final response = await _apiService.get('/inventory/$id');
-    if (response != null && response['success'] == true && response['data'] != null) {
-      return UnitModel.fromJson(response['data']);
+    if (response is Map<String, dynamic>) {
+      final data = response['data'] ?? response['unit'] ?? response;
+      if (data is Map<String, dynamic>) {
+        return UnitModel.fromJson(data);
+      }
     }
     return null;
   }
 
   Future<UnitModel?> createUnit(UnitModel unit) async {
     final response = await _apiService.post('/inventory', body: unit.toJson());
-    if (response != null && response['success'] == true && response['data'] != null) {
-      return UnitModel.fromJson(response['data']);
+    if (response is Map<String, dynamic>) {
+      final data = response['data'] ?? response['unit'] ?? response;
+      if (data is Map<String, dynamic>) {
+        return UnitModel.fromJson(data);
+      }
     }
     return null;
   }
 
   Future<UnitModel?> updateUnit(int id, UnitModel unit) async {
     final response = await _apiService.put('/inventory/$id', body: unit.toJson());
-    if (response != null && response['success'] == true && response['data'] != null) {
-      return UnitModel.fromJson(response['data']);
+    if (response is Map<String, dynamic>) {
+      final data = response['data'] ?? response['unit'] ?? response;
+      if (data is Map<String, dynamic>) {
+        return UnitModel.fromJson(data);
+      }
     }
     return null;
   }
 
   Future<bool> deleteUnit(int id) async {
     final response = await _apiService.delete('/inventory/$id');
-    if (response != null && response['success'] == true) {
-      return true;
+    if (response is Map<String, dynamic>) {
+      return response['success'] == true || response['status'] == 'success';
     }
-    return false;
+    return response != null;
   }
 
   Future<Map<String, dynamic>> getInventoryStats() async {
     final response = await _apiService.get('/inventory/stats');
-    if (response != null && response['success'] == true && response['data'] != null) {
-      return response['data'] as Map<String, dynamic>;
+    if (response is Map<String, dynamic>) {
+      final data = response['data'] ?? response;
+      if (data is Map<String, dynamic>) {
+        return data;
+      }
     }
     return {};
   }

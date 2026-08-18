@@ -108,6 +108,9 @@ class AuthProvider extends ChangeNotifier {
         );
 
         await _storageService.saveToken(_token!);
+        if (response.expiresIn != null) {
+          await _storageService.saveExpiresIn(response.expiresIn!);
+        }
         if (_user != null) {
           await _storageService.saveUser(_user!);
         }

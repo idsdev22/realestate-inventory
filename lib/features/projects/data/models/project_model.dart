@@ -47,29 +47,43 @@ class ProjectModel {
     this.blocks = const [],
   });
 
+  static int _parseInt(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? 0;
+    return 0;
+  }
+
   factory ProjectModel.fromJson(Map<String, dynamic> json) {
+    final counts = json['counts'] is Map<String, dynamic>
+        ? json['counts'] as Map<String, dynamic>
+        : (json['counts'] is Map ? Map<String, dynamic>.from(json['counts']) : null);
+
     return ProjectModel(
-      id: json['id'] is String ? int.tryParse(json['id']) ?? 0 : json['id'] ?? 0,
-      name: json['name'] ?? '',
-      location: json['location'] ?? '',
-      city: json['city'] ?? '',
-      projectType: json['project_type'] ?? 'Residential Plot',
-      description: json['description'],
-      approvalDetails: json['approval_details'],
-      contactName: json['contact_name'],
-      contactPhone: json['contact_phone'],
-      contactEmail: json['contact_email'],
-      coverImage: json['cover_image'],
-      status: json['status'] ?? 'active',
-      createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at']) : null,
-      updatedAt: json['updated_at'] != null ? DateTime.tryParse(json['updated_at']) : null,
-      deletedAt: json['deleted_at'] != null ? DateTime.tryParse(json['deleted_at']) : null,
-      totalUnits: json['total_units'] ?? 0,
-      availableUnits: json['available_units'] ?? 0,
-      blockedUnits: json['blocked_units'] ?? 0,
-      bookedUnits: json['booked_units'] ?? 0,
-      registeredUnits: json['registered_units'] ?? 0,
-      blocks: json['blocks'] != null ? List<String>.from(json['blocks']) : [],
+      id: _parseInt(json['id']),
+      name: (json['name'] ?? json['project_name'] ?? json['title'] ?? '').toString(),
+      location: (json['location'] ?? json['project_location'] ?? json['address'] ?? '').toString(),
+      city: (json['city'] ?? '').toString(),
+      projectType: (json['project_type'] ?? json['type'] ?? 'Residential Plot').toString(),
+      description: json['description']?.toString(),
+      approvalDetails: (json['approval_details'] ?? json['approval'] ?? json['approval_status'])?.toString(),
+      contactName: json['contact_name']?.toString(),
+      contactPhone: json['contact_phone']?.toString(),
+      contactEmail: json['contact_email']?.toString(),
+      coverImage: (json['cover_image_url'] ?? json['cover_image'] ?? json['image'] ?? json['image_url'])?.toString(),
+      status: (json['status'] ?? 'active').toString(),
+      createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at'].toString()) : null,
+      updatedAt: json['updated_at'] != null ? DateTime.tryParse(json['updated_at'].toString()) : null,
+      deletedAt: json['deleted_at'] != null ? DateTime.tryParse(json['deleted_at'].toString()) : null,
+      totalUnits: _parseInt(counts?['total'] ?? json['total_units'] ?? json['totalUnits']),
+      availableUnits: _parseInt(counts?['available'] ?? json['available_units'] ?? json['availableUnits']),
+      blockedUnits: _parseInt(counts?['blocked'] ?? json['blocked_units'] ?? json['blockedUnits']),
+      bookedUnits: _parseInt(counts?['booked'] ?? json['booked_units'] ?? json['bookedUnits']),
+      registeredUnits: _parseInt(counts?['registered'] ?? json['registered_units'] ?? json['registeredUnits']),
+      blocks: json['blocks'] is List
+          ? List<String>.from((json['blocks'] as List).map((e) => e.toString()))
+          : [],
     );
   }
 

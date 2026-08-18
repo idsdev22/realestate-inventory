@@ -8,39 +8,65 @@ class ProjectService {
 
   Future<List<ProjectModel>> getProjects() async {
     final response = await _apiService.get('/projects');
-    if (response != null && response['success'] == true && response['data'] != null) {
-      return (response['data'] as List).map((e) => ProjectModel.fromJson(e)).toList();
+    if (response is List) {
+      return response
+          .whereType<Map<String, dynamic>>()
+          .map((e) => ProjectModel.fromJson(e))
+          .toList();
     }
-    // Fallback or error return
+    if (response is Map<String, dynamic>) {
+      var data = response['data'] ?? response['projects'] ?? response['list'];
+      if (data is Map<String, dynamic>) {
+        data = data['items'] ?? data['projects'] ?? data['data'] ?? data['list'];
+      }
+      if (data is List) {
+        return data
+            .whereType<Map<String, dynamic>>()
+            .map((e) => ProjectModel.fromJson(e))
+            .toList();
+      }
+    }
     return [];
   }
 
   Future<ProjectModel?> getProjectById(int id) async {
     final response = await _apiService.get('/projects/$id');
-    if (response != null && response['success'] == true && response['data'] != null) {
-      return ProjectModel.fromJson(response['data']);
+    if (response is Map<String, dynamic>) {
+      final data = response['data'] ?? response['project'] ?? response;
+      if (data is Map<String, dynamic>) {
+        return ProjectModel.fromJson(data);
+      }
     }
     return null;
   }
 
   Future<ProjectModel?> createProject(ProjectModel project) async {
     final response = await _apiService.post('/projects', body: project.toJson());
-    if (response != null && response['success'] == true && response['data'] != null) {
-      return ProjectModel.fromJson(response['data']);
+    if (response is Map<String, dynamic>) {
+      final data = response['data'] ?? response['project'] ?? response;
+      if (data is Map<String, dynamic>) {
+        return ProjectModel.fromJson(data);
+      }
     }
     return null;
   }
 
   Future<ProjectModel?> updateProject(int id, ProjectModel project) async {
     final response = await _apiService.put('/projects/$id', body: project.toJson());
-    if (response != null && response['success'] == true && response['data'] != null) {
-      return ProjectModel.fromJson(response['data']);
+    if (response is Map<String, dynamic>) {
+      final data = response['data'] ?? response['project'] ?? response;
+      if (data is Map<String, dynamic>) {
+        return ProjectModel.fromJson(data);
+      }
     }
     return null;
   }
 
   Future<bool> deleteProject(int id) async {
     final response = await _apiService.delete('/projects/$id');
-    return response != null && response['success'] == true;
+    if (response is Map<String, dynamic>) {
+      return response['success'] == true || response['status'] == 'success';
+    }
+    return response != null;
   }
 }

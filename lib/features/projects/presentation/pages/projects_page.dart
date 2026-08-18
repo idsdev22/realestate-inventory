@@ -20,6 +20,14 @@ class _ProjectsPageState extends State<ProjectsPage> {
   String _searchQuery = '';
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<InventoryProvider>().loadProjects();
+    });
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
@@ -72,184 +80,194 @@ class _ProjectsPageState extends State<ProjectsPage> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.filter_list_rounded, color: AppColors.textPrimary),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Filter projects by location / status')),
-              );
-            },
+            icon: const Icon(Icons.refresh_rounded, color: AppColors.textPrimary),
+            onPressed: () => inventoryProvider.loadProjects(),
           ),
           const SizedBox(width: 8),
         ],
       ),
-      body: Column(
-        children: [
-          // Search & Action Header
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-            child: Column(
-              children: [
-                // Search Bar
-                Row(
-                  children: [
-                    Expanded(
-                      child: Container(
+      body: RefreshIndicator(
+        onRefresh: () => inventoryProvider.loadProjects(),
+        child: Column(
+          children: [
+            // Search & Action Header
+            Container(
+              color: Colors.white,
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+              child: Column(
+                children: [
+                  // Search Bar
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.background,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.borderLight),
+                          ),
+                          child: TextField(
+                            controller: _searchController,
+                            onChanged: (val) => setState(() => _searchQuery = val),
+                            style: GoogleFonts.poppins(fontSize: 14),
+                            decoration: InputDecoration(
+                              hintText: 'Search projects',
+                              hintStyle: GoogleFonts.poppins(
+                                color: AppColors.textMuted,
+                                fontSize: 14,
+                              ),
+                              prefixIcon: const Icon(
+                                Icons.search_rounded,
+                                color: AppColors.textMuted,
+                                size: 22,
+                              ),
+                              suffixIcon: _searchQuery.isNotEmpty
+                                  ? IconButton(
+                                      icon: const Icon(Icons.clear_rounded, size: 18),
+                                      onPressed: () {
+                                        _searchController.clear();
+                                        setState(() => _searchQuery = '');
+                                      },
+                                    )
+                                  : const Icon(
+                                      Icons.arrow_drop_down_rounded,
+                                      color: AppColors.textMuted,
+                                      size: 24,
+                                    ),
+                              border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Container(
                         decoration: BoxDecoration(
                           color: AppColors.background,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: AppColors.borderLight),
                         ),
-                        child: TextField(
-                          controller: _searchController,
-                          onChanged: (val) => setState(() => _searchQuery = val),
-                          style: GoogleFonts.poppins(fontSize: 14),
-                          decoration: InputDecoration(
-                            hintText: 'Search projects',
-                            hintStyle: GoogleFonts.poppins(
-                              color: AppColors.textMuted,
-                              fontSize: 14,
-                            ),
-                            prefixIcon: const Icon(
-                              Icons.search_rounded,
-                              color: AppColors.textMuted,
-                              size: 22,
-                            ),
-                            suffixIcon: _searchQuery.isNotEmpty
-                                ? IconButton(
-                                    icon: const Icon(Icons.clear_rounded, size: 18),
-                                    onPressed: () {
-                                      _searchController.clear();
-                                      setState(() => _searchQuery = '');
-                                    },
-                                  )
-                                : const Icon(
-                                    Icons.arrow_drop_down_rounded,
-                                    color: AppColors.textMuted,
-                                    size: 24,
-                                  ),
-                            border: InputBorder.none,
-                            enabledBorder: InputBorder.none,
-                            focusedBorder: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
+                        child: IconButton(
+                          icon: const Icon(
+                            Icons.tune_rounded,
+                            color: AppColors.iconColor,
+                            size: 20,
+                          ),
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Filter settings')),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // Add Project Button (For Admin Role)
+                  if (isAdmin) ...[
+                    const SizedBox(height: 14),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () => _showAddProjectDialog(context),
+                        icon: const Icon(Icons.add_rounded, size: 20),
+                        label: Text(
+                          '+ Add Project',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.background,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.borderLight),
-                      ),
-                      child: IconButton(
-                        icon: const Icon(
-                          Icons.tune_rounded,
-                          color: AppColors.iconColor,
-                          size: 20,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
                         ),
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Filter settings')),
-                          );
-                        },
                       ),
                     ),
                   ],
-                ),
-
-                // Add Project Button (For Admin Role)
-                if (isAdmin) ...[
-                  const SizedBox(height: 14),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () => _showAddProjectDialog(context),
-                      icon: const Icon(Icons.add_rounded, size: 20),
-                      label: Text(
-                        '+ Add Project',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 0,
-                      ),
-                    ),
-                  ),
                 ],
-              ],
+              ),
             ),
-          ),
 
-          // Projects List
-          Expanded(
-            child: filteredProjects.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.search_off_rounded,
-                          size: 56,
-                          color: Colors.grey.shade400,
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'No projects found',
-                          style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Try adjusting your search criteria',
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20.0,
-                      vertical: 16.0,
-                    ),
-                    itemCount: filteredProjects.length,
-                    itemBuilder: (context, index) {
-                      final project = filteredProjects[index];
-                      return ProjectCard(
-                        project: project,
-                        showTotalUnits: true,
-                        onTap: () {
-                          inventoryProvider.setSelectedProject(project.id);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => InventoryListPage(project: project),
+            // Projects List
+            Expanded(
+              child: inventoryProvider.isLoading && allProjects.isEmpty
+                  ? const Center(
+                      child: CircularProgressIndicator(),
+                    )
+                  : filteredProjects.isEmpty
+                      ? ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          children: [
+                            SizedBox(height: MediaQuery.of(context).size.height * 0.18),
+                            Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.search_off_rounded,
+                                    size: 56,
+                                    color: Colors.grey.shade400,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    'No projects found',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Pull down to refresh or add a new project',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 13,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          );
-                        },
-                      );
-                    },
-                  ),
-          ),
-        ],
+                          ],
+                        )
+                      : ListView.builder(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20.0,
+                            vertical: 16.0,
+                          ),
+                          itemCount: filteredProjects.length,
+                          itemBuilder: (context, index) {
+                            final project = filteredProjects[index];
+                            return ProjectCard(
+                              project: project,
+                              showTotalUnits: true,
+                              onTap: () {
+                                inventoryProvider.setSelectedProject(project.id);
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => InventoryListPage(project: project),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
+            ),
+          ],
+        ),
       ),
     );
   }

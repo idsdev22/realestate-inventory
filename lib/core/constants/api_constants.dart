@@ -1,5 +1,5 @@
 class ApiConstants {
-  static const String baseUrl = 'https://superfinelabels.in/plots/api';
+  static const String baseUrl = 'https://superfinelabels.in/plots/index.php/api';
 
   // Auth Endpoints
   static const String login = '/auth/login';

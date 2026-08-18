@@ -5,6 +5,7 @@ import '../../features/auth/data/models/user_model.dart';
 class StorageService {
   static const String _keyToken = 'auth_token';
   static const String _keyUser = 'auth_user';
+  static const String _keyExpiresIn = 'auth_expires_in';
 
   final SharedPreferences _prefs;
 
@@ -26,6 +27,19 @@ class StorageService {
 
   Future<bool> removeToken() async {
     return await _prefs.remove(_keyToken);
+  }
+
+  // Expires In methods
+  Future<bool> saveExpiresIn(int expiresIn) async {
+    return await _prefs.setInt(_keyExpiresIn, expiresIn);
+  }
+
+  int? getExpiresIn() {
+    return _prefs.getInt(_keyExpiresIn);
+  }
+
+  Future<bool> removeExpiresIn() async {
+    return await _prefs.remove(_keyExpiresIn);
   }
 
   // User methods
@@ -52,6 +66,7 @@ class StorageService {
   // Clear all auth data
   Future<void> clearAuth() async {
     await removeToken();
+    await removeExpiresIn();
     await removeUser();
   }
 

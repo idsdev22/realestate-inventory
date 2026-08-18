@@ -20,7 +20,6 @@ class InventoryProvider extends ChangeNotifier {
     InventoryService? inventoryService,
   })  : _projectService = projectService,
         _inventoryService = inventoryService {
-    _initializeDefaultData();
     if (_projectService != null) {
       loadProjects();
     }
@@ -35,9 +34,7 @@ class InventoryProvider extends ChangeNotifier {
     notifyListeners();
     try {
       final fetchedUnits = await _inventoryService.getInventory();
-      if (fetchedUnits.isNotEmpty) {
-        _units = fetchedUnits;
-      }
+      _units = fetchedUnits;
     } catch (e) {
       debugPrint('Error loading inventory: $e');
     } finally {
@@ -52,9 +49,7 @@ class InventoryProvider extends ChangeNotifier {
     notifyListeners();
     try {
       final fetchedProjects = await _projectService.getProjects();
-      if (fetchedProjects.isNotEmpty) {
-        _projects = fetchedProjects;
-      }
+      _projects = fetchedProjects;
     } catch (e) {
       debugPrint('Error loading projects: $e');
     } finally {
@@ -100,7 +95,8 @@ class InventoryProvider extends ChangeNotifier {
       if (_searchQuery.trim().isNotEmpty) {
         final query = _searchQuery.toLowerCase().trim();
         final matchUnit = unit.unitNo.toLowerCase().contains(query);
-        final matchBlock = unit.blockPhase?.toLowerCase().contains(query) ?? false;
+        final matchBlock =
+            unit.blockPhase?.toLowerCase().contains(query) ?? false;
         final matchType = unit.plotType.toLowerCase().contains(query);
         final matchFacing = unit.facing?.toLowerCase().contains(query) ?? false;
         if (!matchUnit && !matchBlock && !matchType && !matchFacing) {
@@ -120,10 +116,13 @@ class InventoryProvider extends ChangeNotifier {
   int get countRegistered => _getFilteredCount('Registered');
 
   int get totalInventoryCount => _units.length;
-  int get totalAvailableCount => _units.where((u) => u.status == 'Available').length;
-  int get totalBlockedCount => _units.where((u) => u.status == 'Blocked').length;
+  int get totalAvailableCount =>
+      _units.where((u) => u.status == 'Available').length;
+  int get totalBlockedCount =>
+      _units.where((u) => u.status == 'Blocked').length;
   int get totalBookedCount => _units.where((u) => u.status == 'Booked').length;
-  int get totalRegisteredCount => _units.where((u) => u.status == 'Registered').length;
+  int get totalRegisteredCount =>
+      _units.where((u) => u.status == 'Registered').length;
 
   int _getFilteredCount(String? status) {
     return _units.where((unit) {
@@ -239,12 +238,21 @@ class InventoryProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> bulkUpdateStatus(List<int> unitIds, String newStatus, {String? remarks}) async {
+  Future<bool> bulkUpdateStatus(
+    List<int> unitIds,
+    String newStatus, {
+    String? remarks,
+  }) async {
     if (_inventoryService != null) {
       _isLoading = true;
       notifyListeners();
       try {
-        final success = await _inventoryService.bulkUpdateStatus(unitIds, 'change_status', newStatus, remarks: remarks);
+        final success = await _inventoryService.bulkUpdateStatus(
+          unitIds,
+          'change_status',
+          newStatus,
+          remarks: remarks,
+        );
         if (success) {
           for (int i = 0; i < _units.length; i++) {
             if (unitIds.contains(_units[i].id)) {
@@ -319,7 +327,9 @@ class InventoryProvider extends ChangeNotifier {
       final available = projUnits.where((u) => u.status == 'Available').length;
       final blocked = projUnits.where((u) => u.status == 'Blocked').length;
       final booked = projUnits.where((u) => u.status == 'Booked').length;
-      final registered = projUnits.where((u) => u.status == 'Registered').length;
+      final registered = projUnits
+          .where((u) => u.status == 'Registered')
+          .length;
 
       _projects[projectIndex] = _projects[projectIndex].copyWith(
         totalUnits: total > 0 ? total : _projects[projectIndex].totalUnits,
@@ -331,236 +341,4 @@ class InventoryProvider extends ChangeNotifier {
     }
   }
 
-  void _initializeDefaultData() {
-    _projects = [
-      ProjectModel(
-        id: 1,
-        name: 'Royal City',
-        location: 'Coimbatore',
-        city: 'Coimbatore',
-        totalUnits: 250,
-        availableUnits: 128,
-        blockedUnits: 15,
-        bookedUnits: 82,
-        registeredUnits: 25,
-        coverImage: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=600&auto=format&fit=crop&q=80',
-        approvalDetails: 'DTCP Approved',
-        description: 'Premium gated community township situated in prime Coimbatore corridor.',
-      ),
-      ProjectModel(
-        id: 2,
-        name: 'Garden City',
-        location: 'Coimbatore',
-        city: 'Coimbatore',
-        totalUnits: 190,
-        availableUnits: 64,
-        blockedUnits: 10,
-        bookedUnits: 70,
-        registeredUnits: 56,
-        coverImage: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600&auto=format&fit=crop&q=80',
-        approvalDetails: 'DTCP & RERA Approved',
-        description: 'Serene eco-living with lush gardens and world-class road infrastructure.',
-      ),
-      ProjectModel(
-        id: 3,
-        name: 'Green County',
-        location: 'Coimbatore',
-        city: 'Coimbatore',
-        totalUnits: 320,
-        availableUnits: 36,
-        blockedUnits: 8,
-        bookedUnits: 200,
-        registeredUnits: 76,
-        coverImage: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&auto=format&fit=crop&q=80',
-        approvalDetails: 'DTCP Approved',
-        description: 'Elite villa plots surrounded by green landscaping and sports avenues.',
-      ),
-      ProjectModel(
-        id: 4,
-        name: 'Vishakha Township',
-        location: 'Coimbatore',
-        city: 'Coimbatore',
-        totalUnits: 150,
-        availableUnits: 12,
-        blockedUnits: 5,
-        bookedUnits: 50,
-        registeredUnits: 83,
-        coverImage: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&auto=format&fit=crop&q=80',
-        approvalDetails: 'DTCP Approved',
-        description: 'Fast developing residential sector with underground utilities.',
-      ),
-    ];
-
-    _selectedProjectId = 1;
-
-    // Populate Units for Royal City & others
-    _units = [
-      UnitModel(
-        id: 101,
-        projectId: 1,
-        projectName: 'Royal City',
-        blockPhase: 'A Block',
-        unitNo: 'A-101',
-        plotType: 'Residential Plot',
-        areaSqFt: 1200,
-        facing: 'East Facing',
-        roadWidthFt: 30,
-        dimensions: '30 x 40',
-        price: 3600000,
-        pricePerSqFt: 3000,
-        status: 'Available',
-        remarks: 'Direct access to park, DTCP approved clear title.',
-        approvalDetails: 'DTCP Approved',
-      ),
-      UnitModel(
-        id: 102,
-        projectId: 1,
-        projectName: 'Royal City',
-        blockPhase: 'A Block',
-        unitNo: 'A-102',
-        plotType: 'Residential Plot',
-        areaSqFt: 1500,
-        facing: 'North Facing',
-        roadWidthFt: 40,
-        dimensions: '30 x 50',
-        price: 4500000,
-        pricePerSqFt: 3000,
-        status: 'Available',
-        remarks: 'Wide 40 ft avenue road facing.',
-        approvalDetails: 'DTCP Approved',
-      ),
-      UnitModel(
-        id: 103,
-        projectId: 1,
-        projectName: 'Royal City',
-        blockPhase: 'A Block',
-        unitNo: 'A-103',
-        plotType: 'Residential Plot',
-        areaSqFt: 1200,
-        facing: 'West Facing',
-        roadWidthFt: 30,
-        dimensions: '30 x 40',
-        price: 3600000,
-        pricePerSqFt: 3000,
-        status: 'Blocked',
-        remarks: 'Blocked for client token verification.',
-        approvalDetails: 'DTCP Approved',
-      ),
-      UnitModel(
-        id: 104,
-        projectId: 1,
-        projectName: 'Royal City',
-        blockPhase: 'A Block',
-        unitNo: 'A-104',
-        plotType: 'Corner Plot',
-        areaSqFt: 1800,
-        facing: 'North-East Facing',
-        roadWidthFt: 40,
-        dimensions: '40 x 45',
-        price: 5800000,
-        pricePerSqFt: 3222,
-        isCorner: true,
-        status: 'Booked',
-        remarks: 'Prime dual-road corner unit.',
-        approvalDetails: 'DTCP Approved',
-      ),
-      UnitModel(
-        id: 105,
-        projectId: 1,
-        projectName: 'Royal City',
-        blockPhase: 'A Block',
-        unitNo: 'A-105',
-        plotType: 'Residential Plot',
-        areaSqFt: 1200,
-        facing: 'East Facing',
-        roadWidthFt: 30,
-        dimensions: '30 x 40',
-        price: 3600000,
-        pricePerSqFt: 3000,
-        status: 'Available',
-        approvalDetails: 'DTCP Approved',
-      ),
-      UnitModel(
-        id: 106,
-        projectId: 1,
-        projectName: 'Royal City',
-        blockPhase: 'A Block',
-        unitNo: 'A-106',
-        plotType: 'Residential Plot',
-        areaSqFt: 1500,
-        facing: 'South Facing',
-        roadWidthFt: 30,
-        dimensions: '30 x 50',
-        price: 4500000,
-        pricePerSqFt: 3000,
-        status: 'Available',
-        approvalDetails: 'DTCP Approved',
-      ),
-      UnitModel(
-        id: 107,
-        projectId: 1,
-        projectName: 'Royal City',
-        blockPhase: 'B Block',
-        unitNo: 'B-201',
-        plotType: 'Residential Plot',
-        areaSqFt: 1200,
-        facing: 'East Facing',
-        roadWidthFt: 30,
-        dimensions: '30 x 40',
-        price: 3600000,
-        pricePerSqFt: 3000,
-        status: 'Available',
-        approvalDetails: 'DTCP Approved',
-      ),
-      UnitModel(
-        id: 108,
-        projectId: 1,
-        projectName: 'Royal City',
-        blockPhase: 'B Block',
-        unitNo: 'B-202',
-        plotType: 'Residential Plot',
-        areaSqFt: 2400,
-        facing: 'North Facing',
-        roadWidthFt: 60,
-        dimensions: '40 x 60',
-        price: 7800000,
-        pricePerSqFt: 3250,
-        status: 'Registered',
-        approvalDetails: 'DTCP Approved',
-      ),
-      // Garden City units
-      UnitModel(
-        id: 201,
-        projectId: 2,
-        projectName: 'Garden City',
-        blockPhase: 'A Block',
-        unitNo: 'GC-101',
-        plotType: 'Residential Plot',
-        areaSqFt: 1500,
-        facing: 'East Facing',
-        roadWidthFt: 40,
-        dimensions: '30 x 50',
-        price: 4800000,
-        pricePerSqFt: 3200,
-        status: 'Available',
-        approvalDetails: 'DTCP Approved',
-      ),
-      UnitModel(
-        id: 202,
-        projectId: 2,
-        projectName: 'Garden City',
-        blockPhase: 'A Block',
-        unitNo: 'GC-102',
-        plotType: 'Commercial Plot',
-        areaSqFt: 2000,
-        facing: 'North Facing',
-        roadWidthFt: 60,
-        dimensions: '40 x 50',
-        price: 7200000,
-        pricePerSqFt: 3600,
-        status: 'Blocked',
-        approvalDetails: 'DTCP Approved',
-      ),
-    ];
-  }
 }
