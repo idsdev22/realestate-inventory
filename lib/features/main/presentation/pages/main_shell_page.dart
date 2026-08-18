@@ -1,0 +1,161 @@
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/syncr_drawer.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../dashboard/presentation/pages/admin_dashboard_view.dart';
+import '../../../dashboard/presentation/pages/team_dashboard_view.dart';
+import '../../../inventory/presentation/pages/inventory_list_page.dart';
+import '../../../more/presentation/pages/more_page.dart';
+import '../../../projects/presentation/pages/projects_page.dart';
+import '../../../requests/presentation/pages/my_requests_page.dart';
+import '../../../teams/presentation/pages/marketing_teams_page.dart';
+
+class MainShellPage extends StatefulWidget {
+  final int initialIndex;
+
+  const MainShellPage({
+    super.key,
+    this.initialIndex = 0,
+  });
+
+  @override
+  State<MainShellPage> createState() => _MainShellPageState();
+}
+
+class _MainShellPageState extends State<MainShellPage> {
+  late int _currentIndex;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+    final isAdmin = authProvider.isAdmin;
+
+    // Screens per role
+    final List<Widget> pages = isAdmin
+        ? [
+            AdminDashboardView(
+              onNavigateToTab: (index) => setState(() => _currentIndex = index),
+            ),
+            const ProjectsPage(),
+            const InventoryListPage(),
+            const MarketingTeamsPage(),
+            const MorePage(),
+          ]
+        : [
+            TeamDashboardView(
+              onNavigateToTab: (index) => setState(() => _currentIndex = index),
+            ),
+            const ProjectsPage(),
+            const InventoryListPage(),
+            const MyRequestsPage(),
+            const MorePage(),
+          ];
+
+    return Scaffold(
+      key: _scaffoldKey,
+      drawer: const SyncrDrawer(),
+      body: IndexedStack(
+        index: _currentIndex < pages.length ? _currentIndex : 0,
+        children: pages,
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: const Border(
+            top: BorderSide(color: AppColors.borderLight, width: 1),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, -4),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildNavItem(
+                  index: 0,
+                  icon: isAdmin ? Icons.home_rounded : Icons.home_rounded,
+                  label: isAdmin ? 'Dashboard' : 'Home',
+                ),
+                _buildNavItem(
+                  index: 1,
+                  icon: Icons.apartment_rounded,
+                  label: 'Projects',
+                ),
+                _buildNavItem(
+                  index: 2,
+                  icon: Icons.list_alt_rounded,
+                  label: 'Inventory',
+                ),
+                _buildNavItem(
+                  index: 3,
+                  icon: isAdmin ? Icons.group_rounded : Icons.assignment_rounded,
+                  label: isAdmin ? 'Teams' : 'Requests',
+                ),
+                _buildNavItem(
+                  index: 4,
+                  icon: Icons.more_horiz_rounded,
+                  label: 'More',
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem({
+    required int index,
+    required IconData icon,
+    required String label,
+  }) {
+    final isSelected = _currentIndex == index;
+
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _currentIndex = index;
+        });
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? AppColors.primary : AppColors.textMuted,
+              size: 22,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: GoogleFonts.poppins(
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                color: isSelected ? AppColors.primary : AppColors.textMuted,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
