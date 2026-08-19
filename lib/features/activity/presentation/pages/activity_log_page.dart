@@ -13,17 +13,25 @@ class ActivityLogPage extends StatefulWidget {
 }
 
 class _ActivityLogPageState extends State<ActivityLogPage> {
-  final List<String> _filters = [
-    'All Activities',
-    'Status Changes',
-    'Unit Updates',
-    'Price Updates',
-  ];
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => context.read<TeamsProvider>().fetchActivities());
+    _scrollController.addListener(_onScroll);
+    Future.microtask(() => context.read<TeamsProvider>().fetchActivities(refresh: true));
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      context.read<TeamsProvider>().fetchActivities();
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -122,13 +130,23 @@ class _ActivityLogPageState extends State<ActivityLogPage> {
                     ),
                   )
                 : ListView.builder(
+                    controller: _scrollController,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 20.0,
                       vertical: 16.0,
                     ),
-                    itemCount: grouped.keys.length,
-                    itemBuilder: (context, groupIndex) {
-                      final groupTitle = grouped.keys.elementAt(groupIndex);
+                    itemCount: grouped.keys.length + (teamsProvider.isLoadingMoreActivities ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index == grouped.keys.length) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16.0),
+                          child: Center(
+                            child: CircularProgressIndicator(color: AppColors.primary),
+                          ),
+                        );
+                      }
+
+                      final groupTitle = grouped.keys.elementAt(index);
                       final groupItems = grouped[groupTitle]!;
 
                       return Column(

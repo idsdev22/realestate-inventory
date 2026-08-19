@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
-import '../../../teams/presentation/pages/team_users_page.dart';
+import '../../../users/presentation/pages/users_list_page.dart';
 import 'add_edit_company_page.dart';
 import 'companies_list_page.dart';
 
@@ -21,8 +21,12 @@ class CompanyAdminPage extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 0,
         scrolledUnderElevation: 0.5,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: Text(
-          'Promoter Administration',
+          'Promoter Admin Console',
           style: GoogleFonts.poppins(
             fontSize: 18,
             fontWeight: FontWeight.w600,
@@ -31,89 +35,89 @@ class CompanyAdminPage extends StatelessWidget {
         ),
       ),
       body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         children: [
-          // Admin Overview Header
+          // Header Card
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [AppColors.primaryDark, AppColors.primary],
+                colors: [Color(0xFF635BFF), Color(0xFF4F46E5)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.25),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+                  color: const Color(0xFF635BFF).withValues(alpha: 0.3),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
                 ),
               ],
             ),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: const Icon(
-                    Icons.admin_panel_settings_rounded,
-                    color: Colors.white,
-                    size: 30,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        isPromoterAdmin ? 'Promoter Admin Console' : 'Partner Portal',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        isPromoterAdmin
-                            ? 'Configure partner agencies, project permissions, and inventory access'
-                            : 'View assigned projects and inventory access',
-                        style: GoogleFonts.poppins(
-                          fontSize: 11.5,
-                          color: Colors.white.withValues(alpha: 0.85),
-                        ),
+                      child: const Icon(
+                        Icons.admin_panel_settings_rounded,
+                        color: Colors.white,
+                        size: 26,
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Promoter Super Console',
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'Manage partner marketing companies and teams',
+                            style: GoogleFonts.poppins(
+                              color: Colors.white.withValues(alpha: 0.8),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
 
-          // Section 1: Marketing Companies
           Text(
-            'Partner Agencies & Companies',
+            'Company & Team Management',
             style: GoogleFonts.poppins(
-              fontSize: 13.5,
-              fontWeight: FontWeight.bold,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
               color: AppColors.textSecondary,
               letterSpacing: 0.5,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
 
           _buildAdminItem(
             context,
             icon: Icons.corporate_fare_rounded,
-            title: 'Marketing Companies',
-            subtitle: 'Manage agency partnerships, allocations & permissions',
-            badge: 'RESTful API',
+            title: 'Marketing Companies List',
+            subtitle: 'View, search, edit and manage registered marketing companies',
             onTap: () {
               Navigator.push(
                 context,
@@ -127,10 +131,8 @@ class CompanyAdminPage extends StatelessWidget {
             _buildAdminItem(
               context,
               icon: Icons.add_business_rounded,
-              title: 'Create Marketing Company',
-              subtitle: 'POST /companies — register a new marketing agency',
-              badge: 'Admin Only',
-              badgeColor: AppColors.available,
+              title: 'Add New Marketing Company',
+              subtitle: 'Onboard a new agency partner with logo, contact & address',
               onTap: () {
                 Navigator.push(
                   context,
@@ -149,7 +151,7 @@ class CompanyAdminPage extends StatelessWidget {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const TeamUsersPage()),
+                MaterialPageRoute(builder: (_) => const UsersListPage()),
               );
             },
           ),

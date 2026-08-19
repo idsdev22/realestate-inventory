@@ -9,7 +9,7 @@ import '../../../dashboard/presentation/pages/team_dashboard_view.dart';
 import '../../../more/presentation/pages/more_page.dart';
 import '../../../projects/presentation/pages/projects_page.dart';
 import '../../../requests/presentation/pages/my_requests_page.dart';
-import '../../../teams/presentation/pages/marketing_teams_page.dart';
+import '../../../users/presentation/pages/users_list_page.dart';
 
 class MainShellPage extends StatefulWidget {
   final int initialIndex;
@@ -42,7 +42,7 @@ class _MainShellPageState extends State<MainShellPage> {
               onNavigateToTab: (index) => setState(() => _currentIndex = index),
             ),
             const ProjectsPage(),
-            const MarketingTeamsPage(),
+            const UsersListPage(showBackButton: false),
             const MorePage(),
           ]
         : [
@@ -94,9 +94,9 @@ class _MainShellPageState extends State<MainShellPage> {
                 _buildNavItem(
                   index: 2,
                   icon: isAdmin
-                      ? Icons.group_rounded
+                      ? Icons.people_alt_rounded
                       : Icons.assignment_rounded,
-                  label: isAdmin ? 'Teams' : 'Requests',
+                  label: isAdmin ? 'Users' : 'Requests',
                 ),
                 _buildNavItem(
                   index: 3,

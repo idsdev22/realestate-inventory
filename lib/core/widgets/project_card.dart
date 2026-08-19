@@ -7,12 +7,16 @@ import 'syncr_badge.dart';
 class ProjectCard extends StatelessWidget {
   final ProjectModel project;
   final VoidCallback onTap;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
   final bool showTotalUnits;
 
   const ProjectCard({
     super.key,
     required this.project,
     required this.onTap,
+    this.onEdit,
+    this.onDelete,
     this.showTotalUnits = true,
   });
 
@@ -100,7 +104,10 @@ class ProjectCard extends StatelessWidget {
                           const SizedBox(width: 8),
                           Text(
                             '•',
-                            style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+                            style: TextStyle(
+                              color: AppColors.textMuted,
+                              fontSize: 12,
+                            ),
                           ),
                           const SizedBox(width: 8),
                         ],
@@ -108,7 +115,10 @@ class ProjectCard extends StatelessWidget {
                           label: '${project.availableUnits} Available',
                           type: SyncrBadgeType.available,
                           fontSize: 11,
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
                         ),
                       ],
                     ),
@@ -116,12 +126,75 @@ class ProjectCard extends StatelessWidget {
                 ),
               ),
 
-              // Chevron Icon
-              const Icon(
-                Icons.chevron_right_rounded,
-                color: AppColors.iconColor,
-                size: 24,
-              ),
+              // Trailing Options / Chevron
+              if (onEdit != null || onDelete != null)
+                PopupMenuButton<String>(
+                  icon: const Icon(
+                    Icons.more_vert_rounded,
+                    color: AppColors.iconColor,
+                    size: 20,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  onSelected: (value) {
+                    if (value == 'edit' && onEdit != null) {
+                      onEdit!();
+                    } else if (value == 'delete' && onDelete != null) {
+                      onDelete!();
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    if (onEdit != null)
+                      PopupMenuItem(
+                        value: 'edit',
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.edit_outlined,
+                              size: 18,
+                              color: AppColors.textPrimary,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              'Edit Project',
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    if (onDelete != null)
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.delete_outline_rounded,
+                              size: 18,
+                              color: AppColors.rejected,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              'Delete Project',
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                color: AppColors.rejected,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                )
+              else
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppColors.iconColor,
+                  size: 24,
+                ),
             ],
           ),
         ),

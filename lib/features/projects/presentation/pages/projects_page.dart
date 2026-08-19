@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:realestate_inventory/features/projects/data/models/project_model.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/project_card.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -46,12 +47,75 @@ class _ProjectsPageState extends State<ProjectsPage> {
     super.dispose();
   }
 
-  void _showAddProjectDialog(BuildContext context) {
+  void _showAddEditProjectDialog(
+    BuildContext context, {
+    ProjectModel? project,
+  }) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => const AddEditProjectPage(),
+        builder: (_) => AddEditProjectPage(project: project),
         fullscreenDialog: true,
+      ),
+    );
+  }
+
+  void _confirmDeleteProject(BuildContext context, ProjectModel project) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Delete Project',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          'Are you sure you want to delete "${project.name}"? This action cannot be undone.',
+          style: GoogleFonts.poppins(fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.poppins(color: AppColors.textSecondary),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.rejected,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              elevation: 0,
+            ),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final success = await context
+                  .read<InventoryProvider>()
+                  .deleteProject(project.id);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    backgroundColor: success
+                        ? AppColors.available
+                        : AppColors.rejected,
+                    content: Text(
+                      success
+                          ? 'Project "${project.name}" deleted successfully'
+                          : 'Failed to delete project',
+                    ),
+                  ),
+                );
+              }
+            },
+            child: Text(
+              'Delete',
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -60,7 +124,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
     final inventoryProvider = context.watch<InventoryProvider>();
-    final isAdmin = authProvider.isAdmin;
+    final canManageProjects = authProvider.canManageProjects;
 
     final allProjects = inventoryProvider.projects;
     final filteredProjects = _searchQuery.trim().isEmpty
@@ -188,13 +252,13 @@ class _ProjectsPageState extends State<ProjectsPage> {
                     ],
                   ),
 
-                  // Add Project Button (For Admin Role)
-                  if (isAdmin) ...[
+                  // Add Project Button (For Roles with Project Work Access)
+                  if (canManageProjects) ...[
                     const SizedBox(height: 14),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        onPressed: () => _showAddProjectDialog(context),
+                        onPressed: () => _showAddEditProjectDialog(context),
                         icon: const Icon(Icons.add_rounded, size: 20),
                         label: Text(
                           '+ Add Project',
@@ -292,6 +356,15 @@ class _ProjectsPageState extends State<ProjectsPage> {
                               ),
                             );
                           },
+                          onEdit: canManageProjects
+                              ? () => _showAddEditProjectDialog(
+                                  context,
+                                  project: project,
+                                )
+                              : null,
+                          onDelete: canManageProjects
+                              ? () => _confirmDeleteProject(context, project)
+                              : null,
                         );
                       },
                     ),

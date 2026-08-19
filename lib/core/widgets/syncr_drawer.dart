@@ -9,7 +9,7 @@ import '../../features/company_admin/presentation/pages/company_admin_page.dart'
 import '../../features/inventory/presentation/pages/add_edit_unit_page.dart';
 import '../../features/inventory/presentation/pages/inventory_overview_page.dart';
 import '../../features/requests/presentation/pages/my_requests_page.dart';
-import '../../features/teams/presentation/pages/marketing_teams_page.dart';
+import '../../features/users/presentation/pages/users_list_page.dart';
 import '../../features/teams/presentation/pages/team_users_page.dart';
 import '../theme/app_theme.dart';
 import 'syncr_badge.dart';
@@ -31,7 +31,9 @@ class SyncrDrawer extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(color: AppColors.borderLight)),
+                border: Border(
+                  bottom: BorderSide(color: AppColors.borderLight),
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -73,7 +75,10 @@ class SyncrDrawer extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    authProvider.user?.email ?? (isAdmin ? 'admin@syncr.test' : 'abcmarketing@gmail.com'),
+                    authProvider.user?.email ??
+                        (isAdmin
+                            ? 'admin@syncr.test'
+                            : 'abcmarketing@gmail.com'),
                     style: GoogleFonts.poppins(
                       fontSize: 13,
                       color: AppColors.textSecondary,
@@ -82,7 +87,9 @@ class SyncrDrawer extends StatelessWidget {
                   const SizedBox(height: 12),
                   SyncrBadge(
                     label: isAdmin ? 'Promoter Admin' : 'Marketing Agency',
-                    type: isAdmin ? SyncrBadgeType.registered : SyncrBadgeType.booked,
+                    type: isAdmin
+                        ? SyncrBadgeType.active
+                        : SyncrBadgeType.booked,
                   ),
                 ],
               ),
@@ -103,31 +110,26 @@ class SyncrDrawer extends StatelessWidget {
                       onTap: () {
                         if (!isAdmin) {
                           authProvider.setRole(UserRole.admin);
-                          Navigator.pop(context);
                         }
                       },
                       borderRadius: BorderRadius.circular(8),
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         decoration: BoxDecoration(
-                          color: isAdmin ? Colors.white : Colors.transparent,
+                          color: isAdmin
+                              ? AppColors.primary
+                              : Colors.transparent,
                           borderRadius: BorderRadius.circular(8),
-                          boxShadow: isAdmin
-                              ? [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.05),
-                                    blurRadius: 4,
-                                  ),
-                                ]
-                              : null,
                         ),
                         child: Center(
                           child: Text(
-                            'Admin Role',
+                            'Admin',
                             style: GoogleFonts.poppins(
                               fontSize: 12,
-                              fontWeight: isAdmin ? FontWeight.bold : FontWeight.w500,
-                              color: isAdmin ? AppColors.primary : AppColors.textSecondary,
+                              fontWeight: FontWeight.w600,
+                              color: isAdmin
+                                  ? Colors.white
+                                  : AppColors.textSecondary,
                             ),
                           ),
                         ),
@@ -139,31 +141,26 @@ class SyncrDrawer extends StatelessWidget {
                       onTap: () {
                         if (isAdmin) {
                           authProvider.setRole(UserRole.marketingTeam);
-                          Navigator.pop(context);
                         }
                       },
                       borderRadius: BorderRadius.circular(8),
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         decoration: BoxDecoration(
-                          color: !isAdmin ? Colors.white : Colors.transparent,
+                          color: !isAdmin
+                              ? AppColors.primary
+                              : Colors.transparent,
                           borderRadius: BorderRadius.circular(8),
-                          boxShadow: !isAdmin
-                              ? [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.05),
-                                    blurRadius: 4,
-                                  ),
-                                ]
-                              : null,
                         ),
                         child: Center(
                           child: Text(
-                            'Team Role',
+                            'Agency',
                             style: GoogleFonts.poppins(
                               fontSize: 12,
-                              fontWeight: !isAdmin ? FontWeight.bold : FontWeight.w500,
-                              color: !isAdmin ? AppColors.primary : AppColors.textSecondary,
+                              fontWeight: FontWeight.w600,
+                              color: !isAdmin
+                                  ? Colors.white
+                                  : AppColors.textSecondary,
                             ),
                           ),
                         ),
@@ -177,7 +174,10 @@ class SyncrDrawer extends StatelessWidget {
             // Navigation Links
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 children: [
                   if (isAdmin) ...[
                     _buildNavItem(
@@ -188,7 +188,23 @@ class SyncrDrawer extends StatelessWidget {
                         Navigator.pop(context);
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => const CompaniesListPage()),
+                          MaterialPageRoute(
+                            builder: (_) => const CompaniesListPage(),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildNavItem(
+                      context,
+                      icon: Icons.people_alt_outlined,
+                      title: 'Users Management',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const UsersListPage(),
+                          ),
                         );
                       },
                     ),
@@ -200,7 +216,9 @@ class SyncrDrawer extends StatelessWidget {
                         Navigator.pop(context);
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => const InventoryOverviewPage()),
+                          MaterialPageRoute(
+                            builder: (_) => const InventoryOverviewPage(),
+                          ),
                         );
                       },
                     ),
@@ -212,19 +230,9 @@ class SyncrDrawer extends StatelessWidget {
                         Navigator.pop(context);
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => const AddEditUnitPage()),
-                        );
-                      },
-                    ),
-                    _buildNavItem(
-                      context,
-                      icon: Icons.group_outlined,
-                      title: 'Marketing Teams',
-                      onTap: () {
-                        Navigator.pop(context);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const MarketingTeamsPage()),
+                          MaterialPageRoute(
+                            builder: (_) => const AddEditUnitPage(),
+                          ),
                         );
                       },
                     ),
@@ -236,7 +244,9 @@ class SyncrDrawer extends StatelessWidget {
                         Navigator.pop(context);
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => const CompanyAdminPage()),
+                          MaterialPageRoute(
+                            builder: (_) => const CompanyAdminPage(),
+                          ),
                         );
                       },
                     ),
@@ -248,7 +258,9 @@ class SyncrDrawer extends StatelessWidget {
                         Navigator.pop(context);
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => const ActivityLogPage()),
+                          MaterialPageRoute(
+                            builder: (_) => const ActivityLogPage(),
+                          ),
                         );
                       },
                     ),
@@ -261,7 +273,9 @@ class SyncrDrawer extends StatelessWidget {
                         Navigator.pop(context);
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => const MyRequestsPage()),
+                          MaterialPageRoute(
+                            builder: (_) => const MyRequestsPage(),
+                          ),
                         );
                       },
                     ),
@@ -273,7 +287,9 @@ class SyncrDrawer extends StatelessWidget {
                         Navigator.pop(context);
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => const TeamUsersPage()),
+                          MaterialPageRoute(
+                            builder: (_) => const TeamUsersPage(),
+                          ),
                         );
                       },
                     ),
@@ -289,7 +305,10 @@ class SyncrDrawer extends StatelessWidget {
                 border: Border(top: BorderSide(color: AppColors.borderLight)),
               ),
               child: ListTile(
-                leading: const Icon(Icons.logout_rounded, color: AppColors.rejected),
+                leading: const Icon(
+                  Icons.logout_rounded,
+                  color: AppColors.rejected,
+                ),
                 title: Text(
                   'Logout',
                   style: GoogleFonts.poppins(
@@ -298,7 +317,9 @@ class SyncrDrawer extends StatelessWidget {
                     fontSize: 14,
                   ),
                 ),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 onTap: () async {
                   await authProvider.logout();
                   if (context.mounted) {
@@ -332,7 +353,11 @@ class SyncrDrawer extends StatelessWidget {
           color: AppColors.textPrimary,
         ),
       ),
-      trailing: const Icon(Icons.chevron_right_rounded, size: 20, color: AppColors.textMuted),
+      trailing: const Icon(
+        Icons.chevron_right_rounded,
+        size: 20,
+        color: AppColors.textMuted,
+      ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       onTap: onTap,
     );

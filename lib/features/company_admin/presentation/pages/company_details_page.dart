@@ -308,11 +308,15 @@ class _CompanyDetailsPageState extends State<CompanyDetailsPage> {
                       children: [
                         const Icon(Icons.location_on_outlined, size: 14, color: AppColors.textMuted),
                         const SizedBox(width: 4),
-                        Text(
-                          '${company.city}, ${company.address}',
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: AppColors.textSecondary,
+                        Expanded(
+                          child: Text(
+                            '${company.city}, ${company.address}',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
@@ -466,22 +470,24 @@ class _CompanyDetailsPageState extends State<CompanyDetailsPage> {
       children: [
         Icon(icon, color: AppColors.textMuted, size: 18),
         const SizedBox(width: 12),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: GoogleFonts.poppins(fontSize: 11, color: AppColors.textSecondary),
-            ),
-            Text(
-              value.isNotEmpty ? value : '—',
-              style: GoogleFonts.poppins(
-                fontSize: 13.5,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: GoogleFonts.poppins(fontSize: 11, color: AppColors.textSecondary),
               ),
-            ),
-          ],
+              Text(
+                value.isNotEmpty ? value : '—',
+                style: GoogleFonts.poppins(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );

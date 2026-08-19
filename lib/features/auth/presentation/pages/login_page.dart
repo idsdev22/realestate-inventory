@@ -219,8 +219,7 @@ class _LoginPageState extends State<LoginPage> {
                                     ? Colors.white
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(9),
-                                boxShadow:
-                                    _selectedRole == UserRole.marketingTeam
+                                boxShadow: _selectedRole == UserRole.marketingTeam
                                     ? [
                                         BoxShadow(
                                           color: Colors.black.withValues(
@@ -233,9 +232,9 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                               child: Center(
                                 child: Text(
-                                  'Marketing',
+                                  'Marketing Admin',
                                   style: GoogleFonts.poppins(
-                                    fontSize: 13,
+                                    fontSize: 12,
                                     fontWeight:
                                         _selectedRole == UserRole.marketingTeam
                                         ? FontWeight.w600
@@ -261,8 +260,7 @@ class _LoginPageState extends State<LoginPage> {
                                     ? Colors.white
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(9),
-                                boxShadow:
-                                    _selectedRole == UserRole.staffs
+                                boxShadow: _selectedRole == UserRole.staffs
                                     ? [
                                         BoxShadow(
                                           color: Colors.black.withValues(
@@ -275,15 +273,13 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                               child: Center(
                                 child: Text(
-                                  'Staffs',
+                                  'Staff',
                                   style: GoogleFonts.poppins(
-                                    fontSize: 13,
-                                    fontWeight:
-                                        _selectedRole == UserRole.staffs
+                                    fontSize: 12,
+                                    fontWeight: _selectedRole == UserRole.staffs
                                         ? FontWeight.w600
                                         : FontWeight.normal,
-                                    color:
-                                        _selectedRole == UserRole.staffs
+                                    color: _selectedRole == UserRole.staffs
                                         ? AppColors.primary
                                         : AppColors.textSecondary,
                                   ),

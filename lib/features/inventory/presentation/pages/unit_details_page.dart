@@ -21,7 +21,7 @@ class UnitDetailsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final inventoryProvider = context.watch<InventoryProvider>();
     final authProvider = context.watch<AuthProvider>();
-    final isAdmin = authProvider.isAdmin;
+    final canManageProjects = authProvider.canManageProjects;
 
     // Get live unit model from provider if updated
     final liveUnit = inventoryProvider.units.firstWhere(
@@ -57,7 +57,7 @@ class UnitDetailsPage extends StatelessWidget {
               inventoryProvider.toggleFavorite(liveUnit.id);
             },
           ),
-          if (isAdmin)
+          if (canManageProjects)
             IconButton(
               icon: const Icon(Icons.edit_outlined, color: AppColors.textPrimary),
               onPressed: () {

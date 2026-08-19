@@ -5,6 +5,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/unit_card.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../projects/data/models/project_model.dart';
+import '../../../projects/presentation/pages/add_edit_project_page.dart';
 import '../providers/inventory_provider.dart';
 import 'add_edit_unit_page.dart';
 import 'bulk_actions_page.dart';
@@ -66,7 +67,7 @@ class _InventoryListPageState extends State<InventoryListPage> {
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
     final inventoryProvider = context.watch<InventoryProvider>();
-    final isAdmin = authProvider.isAdmin;
+    final canManageProjects = authProvider.canManageProjects;
     final isRoot = ModalRoute.of(context)?.canPop != true;
 
     final selectedProject = widget.project ?? inventoryProvider.selectedProject;
@@ -100,7 +101,7 @@ class _InventoryListPageState extends State<InventoryListPage> {
           ),
         ),
         actions: [
-          if (isAdmin) ...[
+          if (canManageProjects) ...[
             if (_isSelectionMode)
               TextButton(
                 onPressed: () {
@@ -116,6 +117,20 @@ class _InventoryListPageState extends State<InventoryListPage> {
                 ),
               )
             else ...[
+              if (selectedProject != null)
+                IconButton(
+                  tooltip: 'Edit Project',
+                  icon: const Icon(Icons.edit_note_rounded, color: AppColors.textPrimary),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => AddEditProjectPage(project: selectedProject),
+                        fullscreenDialog: true,
+                      ),
+                    );
+                  },
+                ),
               IconButton(
                 tooltip: 'Select Units for Bulk Action',
                 icon: const Icon(Icons.checklist_rounded, color: AppColors.textPrimary),
@@ -371,12 +386,12 @@ class _InventoryListPageState extends State<InventoryListPage> {
                         unit: unit,
                         isSelected: isSelected,
                         isSelectionMode: _isSelectionMode,
-                        showFavorite: !isAdmin,
+                        showFavorite: true,
                         onFavoriteToggle: () {
                           inventoryProvider.toggleFavorite(unit.id);
                         },
                         onLongPress: () {
-                          if (isAdmin && !_isSelectionMode) {
+                          if (canManageProjects && !_isSelectionMode) {
                             setState(() => _isSelectionMode = true);
                             inventoryProvider.toggleSelection(unit.id);
                           }

@@ -14,6 +14,9 @@ class TeamsProvider extends ChangeNotifier {
   String _activitySearchQuery = '';
   String _activityFilter = 'All Activities';
   bool _isLoadingActivities = false;
+  int _activityPage = 1;
+  bool _hasMoreActivities = true;
+  bool _isLoadingMoreActivities = false;
 
   TeamsProvider({ActivityService? activityService}) : _activityService = activityService {
     _initializeDefaultData();
@@ -26,6 +29,8 @@ class TeamsProvider extends ChangeNotifier {
   String get activitySearchQuery => _activitySearchQuery;
   String get activityFilter => _activityFilter;
   bool get isLoadingActivities => _isLoadingActivities;
+  bool get isLoadingMoreActivities => _isLoadingMoreActivities;
+  bool get hasMoreActivities => _hasMoreActivities;
 
   List<MarketingTeamModel> get filteredTeams {
     if (_teamSearchQuery.trim().isEmpty) return _teams;
@@ -92,19 +97,47 @@ class TeamsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> fetchActivities() async {
+  Future<void> fetchActivities({bool refresh = false}) async {
     if (_activityService == null) return;
     
-    _isLoadingActivities = true;
+    if (refresh) {
+      _activityPage = 1;
+      _hasMoreActivities = true;
+    }
+
+    if (!_hasMoreActivities || _isLoadingActivities || _isLoadingMoreActivities) return;
+
+    if (_activityPage == 1) {
+      _isLoadingActivities = true;
+    } else {
+      _isLoadingMoreActivities = true;
+    }
     notifyListeners();
 
     try {
-      _activities = await _activityService.getActivities();
+      final newActivities = await _activityService.getActivities(
+        page: _activityPage,
+        limit: 20,
+      );
+      
+      if (newActivities.isEmpty) {
+        _hasMoreActivities = false;
+      } else {
+        if (_activityPage == 1) {
+          _activities = newActivities;
+        } else {
+          _activities.addAll(newActivities);
+        }
+        _activityPage++;
+      }
     } catch (e) {
       AppLogger.e('Error fetching activities', e);
-      _activities = [];
+      if (_activityPage == 1) {
+        _activities = [];
+      }
     } finally {
       _isLoadingActivities = false;
+      _isLoadingMoreActivities = false;
       notifyListeners();
     }
   }

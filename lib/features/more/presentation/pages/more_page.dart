@@ -10,7 +10,7 @@ import '../../../company_admin/presentation/pages/companies_list_page.dart';
 import '../../../inventory/presentation/pages/add_edit_unit_page.dart';
 import '../../../inventory/presentation/pages/inventory_overview_page.dart';
 import '../../../requests/presentation/pages/my_requests_page.dart';
-import '../../../teams/presentation/pages/marketing_teams_page.dart';
+import '../../../users/presentation/pages/users_list_page.dart';
 import '../../../teams/presentation/pages/team_users_page.dart';
 
 import '../../../requests/presentation/pages/all_requests_page.dart';
@@ -29,12 +29,6 @@ class MorePage extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 0,
         scrolledUnderElevation: 0.5,
-        leading: Builder(
-          builder: (ctx) => IconButton(
-            icon: const Icon(Icons.menu_rounded, color: AppColors.textPrimary),
-            onPressed: () => Scaffold.of(ctx).openDrawer(),
-          ),
-        ),
         title: Text(
           'More Options',
           style: GoogleFonts.poppins(
@@ -47,13 +41,14 @@ class MorePage extends StatelessWidget {
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // User Profile Card
             Container(
-              padding: const EdgeInsets.all(18),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: AppColors.borderLight),
                 boxShadow: [
                   BoxShadow(
@@ -66,14 +61,15 @@ class MorePage extends StatelessWidget {
               child: Row(
                 children: [
                   CircleAvatar(
-                    radius: 28,
-                    backgroundColor: AppColors.primaryLight,
-                    child: Icon(
-                      isAdmin
-                          ? Icons.admin_panel_settings_rounded
-                          : Icons.business_center_rounded,
-                      color: AppColors.primary,
-                      size: 28,
+                    radius: 26,
+                    backgroundColor: AppColors.primarySurface,
+                    child: Text(
+                      authProvider.user?.initials ?? (isAdmin ? 'PA' : 'ABC'),
+                      style: GoogleFonts.poppins(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 14),
@@ -82,12 +78,15 @@ class MorePage extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          authProvider.displayName,
+                          authProvider.user?.name ??
+                              (isAdmin ? 'Promoter Admin' : 'ABC Marketing'),
                           style: GoogleFonts.poppins(
-                            fontSize: 17,
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: AppColors.textPrimary,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 2),
                         Text(
@@ -99,12 +98,14 @@ class MorePage extends StatelessWidget {
                             fontSize: 12,
                             color: AppColors.textSecondary,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 6),
                         SyncrBadge(
                           label: isAdmin ? 'Promoter Admin' : 'Marketing Team',
                           type: isAdmin
-                              ? SyncrBadgeType.registered
+                              ? SyncrBadgeType.active
                               : SyncrBadgeType.booked,
                         ),
                       ],
@@ -113,89 +114,9 @@ class MorePage extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 16),
-
-            // Role Switcher Card
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.primarySurface,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.primaryLight),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.swap_horiz_rounded,
-                        color: AppColors.primary,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Switch Active Mode',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () => authProvider.setRole(UserRole.admin),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: isAdmin
-                                ? AppColors.primary
-                                : Colors.white,
-                            foregroundColor: isAdmin
-                                ? Colors.white
-                                : AppColors.textPrimary,
-                            elevation: 0,
-                            side: BorderSide(
-                              color: isAdmin
-                                  ? AppColors.primary
-                                  : AppColors.border,
-                            ),
-                          ),
-                          child: const Text('Admin Panel'),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () =>
-                              authProvider.setRole(UserRole.marketingTeam),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: !isAdmin
-                                ? AppColors.primary
-                                : Colors.white,
-                            foregroundColor: !isAdmin
-                                ? Colors.white
-                                : AppColors.textPrimary,
-                            elevation: 0,
-                            side: BorderSide(
-                              color: !isAdmin
-                                  ? AppColors.primary
-                                  : AppColors.border,
-                            ),
-                          ),
-                          child: const Text('Marketing Team'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
             const SizedBox(height: 20),
 
+            // Promoter Administration (Only shown for Admin)
             if (isAdmin) ...[
               _buildSection(
                 title: 'Promoter Administration',
@@ -210,6 +131,20 @@ class MorePage extends StatelessWidget {
                         context,
                         MaterialPageRoute(
                           builder: (_) => const CompaniesListPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildMenuItem(
+                    icon: Icons.people_alt_rounded,
+                    title: 'Users Management',
+                    subtitle:
+                        'Manage admin accounts, sales executive logins & permissions',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const UsersListPage(),
                         ),
                       );
                     },
@@ -249,32 +184,7 @@ class MorePage extends StatelessWidget {
                     );
                   },
                 ),
-                _buildMenuItem(
-                  icon: Icons.add_home_work_rounded,
-                  title: 'Add / Edit Unit',
-                  subtitle: 'Create or modify plot specifications',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const AddEditUnitPage(),
-                      ),
-                    );
-                  },
-                ),
-                _buildMenuItem(
-                  icon: Icons.group_outlined,
-                  title: 'Marketing Teams',
-                  subtitle: 'Manage agency partnerships',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const MarketingTeamsPage(),
-                      ),
-                    );
-                  },
-                ),
+
                 _buildMenuItem(
                   icon: Icons.assignment_outlined,
                   title: 'My Requests',

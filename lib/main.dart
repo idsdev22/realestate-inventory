@@ -19,6 +19,8 @@ import 'features/projects/data/services/project_service.dart';
 import 'features/inventory/data/services/inventory_service.dart';
 import 'features/company_admin/data/services/company_service.dart';
 import 'features/company_admin/presentation/providers/company_provider.dart';
+import 'features/users/data/services/user_service.dart';
+import 'features/users/presentation/providers/user_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,6 +32,7 @@ void main() async {
   final projectService = ProjectService(apiService);
   final inventoryService = InventoryService(apiService);
   final companyService = CompanyService(apiService);
+  final userService = UserService(apiService);
   final requestService = RequestService(apiService: apiService);
   final activityService = ActivityService(apiService: apiService);
 
@@ -62,6 +65,9 @@ void main() async {
         ),
         ChangeNotifierProvider<CompanyProvider>(
           create: (_) => CompanyProvider(companyService),
+        ),
+        ChangeNotifierProvider<UserProvider>(
+          create: (_) => UserProvider(userService),
         ),
       ],
       child: const RealEstateInventoryApp(),

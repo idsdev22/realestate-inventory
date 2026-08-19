@@ -367,6 +367,67 @@ class InventoryProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> updateProject(int id, ProjectModel project) async {
+    if (_projectService != null) {
+      _isLoading = true;
+      notifyListeners();
+      try {
+        final updatedProject = await _projectService.updateProject(id, project);
+        final projToSave = updatedProject ?? project;
+        final index = _projects.indexWhere((p) => p.id == id);
+        if (index != -1) {
+          _projects[index] = projToSave;
+        }
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } catch (e) {
+        debugPrint('Error updating project: $e');
+      }
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    } else {
+      final index = _projects.indexWhere((p) => p.id == id);
+      if (index != -1) {
+        _projects[index] = project;
+      }
+      notifyListeners();
+      return true;
+    }
+  }
+
+  Future<bool> deleteProject(int id) async {
+    if (_projectService != null) {
+      _isLoading = true;
+      notifyListeners();
+      try {
+        final success = await _projectService.deleteProject(id);
+        if (success) {
+          _projects.removeWhere((p) => p.id == id);
+          if (_selectedProjectId == id) {
+            _selectedProjectId = _projects.isNotEmpty ? _projects.first.id : null;
+          }
+          _isLoading = false;
+          notifyListeners();
+          return true;
+        }
+      } catch (e) {
+        debugPrint('Error deleting project: $e');
+      }
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    } else {
+      _projects.removeWhere((p) => p.id == id);
+      if (_selectedProjectId == id) {
+        _selectedProjectId = _projects.isNotEmpty ? _projects.first.id : null;
+      }
+      notifyListeners();
+      return true;
+    }
+  }
+
   void _updateProjectUnitCounts(int projectId) {
     final projectIndex = _projects.indexWhere((p) => p.id == projectId);
     if (projectIndex != -1) {

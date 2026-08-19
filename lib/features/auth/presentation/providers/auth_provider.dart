@@ -4,11 +4,7 @@ import '../../../../core/storage/storage_service.dart';
 import '../../data/models/user_model.dart';
 import '../../data/services/auth_service.dart';
 
-enum UserRole {
-  admin,
-  marketingTeam,
-  staffs,
-}
+enum UserRole { admin, marketingTeam, staffs }
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService;
@@ -24,8 +20,8 @@ class AuthProvider extends ChangeNotifier {
   AuthProvider({
     required AuthService authService,
     required StorageService storageService,
-  })  : _authService = authService,
-        _storageService = storageService;
+  }) : _authService = authService,
+       _storageService = storageService;
 
   UserModel? get user => _user;
   String? get token => _token;
@@ -34,13 +30,50 @@ class AuthProvider extends ChangeNotifier {
   bool get isAuthenticated => _token != null && _token!.isNotEmpty;
   bool get isInitialized => _isInitialized;
   UserRole get currentRole => _currentRole;
-  bool get isAdmin => _currentRole == UserRole.admin;
+  bool get isAdmin =>
+      _currentRole == UserRole.admin ||
+      _user?.role == 'promoter_admin' ||
+      _user?.role == 'marketing_team_admin';
+
+  bool get isPromoterAdmin =>
+      _user?.role?.toLowerCase() == 'promoter_admin' ||
+      (_currentRole == UserRole.admin && _user?.role == null);
+
+  bool get isMarketingAdmin =>
+      _user?.role?.toLowerCase() == 'marketing_team_admin' ||
+      _user?.role?.toLowerCase() == 'marketing_team' ||
+      (_currentRole == UserRole.marketingTeam && _user?.role == null);
+
+  bool get isStaffUser =>
+      _user?.role?.toLowerCase() == 'marketing_team_user' ||
+      _user?.role?.toLowerCase() == 'staff' ||
+      _user?.role?.toLowerCase() == 'staffs' ||
+      (_currentRole == UserRole.staffs && _user?.role == null);
+
+  bool get canManageProjects {
+    final role = _user?.role?.toLowerCase();
+    if (role == 'promoter_admin' ||
+        role == 'marketing_team_admin' ||
+        role == 'marketing_team_user') {
+      return true;
+    }
+    return _currentRole == UserRole.admin ||
+        _currentRole == UserRole.marketingTeam ||
+        _currentRole == UserRole.staffs;
+  }
+
+  bool get canAddProject => canManageProjects;
 
   String get displayName {
-    if (_currentRole == UserRole.admin) {
-      return 'Admin';
-    } else if (_currentRole == UserRole.marketingTeam) {
-      return 'ABC Marketing';
+    if (_user?.name != null && _user!.name!.trim().isNotEmpty) {
+      return _user!.name!;
+    }
+    final r = _user?.role?.toLowerCase();
+    if (r == 'promoter_admin' || _currentRole == UserRole.admin) {
+      return 'Promoter Admin';
+    } else if (r == 'marketing_team_admin' ||
+        _currentRole == UserRole.marketingTeam) {
+      return 'Marketing Admin';
     } else {
       return 'Staff';
     }
@@ -50,16 +83,16 @@ class AuthProvider extends ChangeNotifier {
     _currentRole = role;
     if (_user != null) {
       _user = _user!.copyWith(
-        role: role == UserRole.admin 
-            ? 'promoter_admin' 
-            : role == UserRole.marketingTeam 
-                ? 'marketing_team' 
-                : 'staff',
-        email: role == UserRole.admin 
-            ? 'admin@syncr.test' 
-            : role == UserRole.marketingTeam 
-                ? 'abcmarketing@gmail.com' 
-                : 'staff@syncr.test',
+        role: role == UserRole.admin
+            ? 'promoter_admin'
+            : role == UserRole.marketingTeam
+            ? 'marketing_team_admin'
+            : 'marketing_team_user',
+        email: role == UserRole.admin
+            ? 'admin@syncr.test'
+            : role == UserRole.marketingTeam
+            ? 'abcmarketing@gmail.com'
+            : 'staff@syncr.test',
       );
     }
     notifyListeners();
@@ -79,9 +112,12 @@ class AuthProvider extends ChangeNotifier {
       _user = _storageService.getUser();
 
       if (_token != null && _token!.isNotEmpty) {
-        if (_user != null && _user!.role == 'marketing_team') {
+        final r = _user?.role?.toLowerCase();
+        if (r == 'marketing_team_admin' || r == 'marketing_team') {
           _currentRole = UserRole.marketingTeam;
-        } else if (_user != null && _user!.role == 'staff') {
+        } else if (r == 'marketing_team_user' ||
+            r == 'staff' ||
+            r == 'staffs') {
           _currentRole = UserRole.staffs;
         } else {
           _currentRole = UserRole.admin;
@@ -115,14 +151,29 @@ class AuthProvider extends ChangeNotifier {
 
       if (response.success && response.token != null) {
         _token = response.token;
-        _user = response.user ?? UserModel(
-          email: email,
-          role: selectedRole == UserRole.admin 
-              ? 'promoter_admin' 
-              : selectedRole == UserRole.marketingTeam 
-                  ? 'marketing_team' 
-                  : 'staff',
-        );
+        _user =
+            response.user ??
+            UserModel(
+              email: email,
+              role: selectedRole == UserRole.admin
+                  ? 'promoter_admin'
+                  : selectedRole == UserRole.marketingTeam
+                  ? 'marketing_team_admin'
+                  : 'marketing_team_user',
+            );
+
+        if (_user?.role != null) {
+          final r = _user!.role!.toLowerCase();
+          if (r == 'marketing_team_admin' || r == 'marketing_team') {
+            _currentRole = UserRole.marketingTeam;
+          } else if (r == 'marketing_team_user' ||
+              r == 'staff' ||
+              r == 'staffs') {
+            _currentRole = UserRole.staffs;
+          } else {
+            _currentRole = UserRole.admin;
+          }
+        }
 
         await _storageService.saveToken(_token!);
         if (response.expiresIn != null) {
@@ -136,7 +187,8 @@ class AuthProvider extends ChangeNotifier {
         notifyListeners();
         return true;
       } else {
-        _errorMessage = response.message ?? 'Login failed. Please check your credentials.';
+        _errorMessage =
+            response.message ?? 'Login failed. Please check your credentials.';
         _isLoading = false;
         notifyListeners();
         return false;
@@ -182,10 +234,15 @@ class AuthProvider extends ChangeNotifier {
       final user = await _authService.getMe();
       if (user != null) {
         _user = user;
-        if (user.role == 'marketing_team') {
+        final r = user.role?.toLowerCase();
+        if (r == 'marketing_team_admin' || r == 'marketing_team') {
           _currentRole = UserRole.marketingTeam;
-        } else if (user.role == 'staff') {
+        } else if (r == 'marketing_team_user' ||
+            r == 'staff' ||
+            r == 'staffs') {
           _currentRole = UserRole.staffs;
+        } else {
+          _currentRole = UserRole.admin;
         }
         await _storageService.saveUser(user);
         notifyListeners();
