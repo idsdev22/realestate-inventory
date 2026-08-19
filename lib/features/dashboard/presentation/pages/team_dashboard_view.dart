@@ -6,8 +6,9 @@ import '../../../../core/widgets/metric_card.dart';
 import '../../../../core/widgets/project_card.dart';
 import '../../../inventory/presentation/pages/inventory_list_page.dart';
 import '../../../inventory/presentation/providers/inventory_provider.dart';
+import '../providers/dashboard_provider.dart';
 
-class TeamDashboardView extends StatelessWidget {
+class TeamDashboardView extends StatefulWidget {
   final Function(int)? onNavigateToTab;
 
   const TeamDashboardView({
@@ -16,9 +17,25 @@ class TeamDashboardView extends StatelessWidget {
   });
 
   @override
+  State<TeamDashboardView> createState() => _TeamDashboardViewState();
+}
+
+class _TeamDashboardViewState extends State<TeamDashboardView> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<DashboardProvider>().loadDashboardData();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final inventoryProvider = context.watch<InventoryProvider>();
-    final projects = inventoryProvider.projects;
+    final dashboardProvider = context.watch<DashboardProvider>();
+    final inventoryProvider = context.read<InventoryProvider>();
+    final dashboardData = dashboardProvider.dashboardData;
+    
+    final isLoading = dashboardProvider.isLoading && !dashboardProvider.hasData;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -68,155 +85,173 @@ class TeamDashboardView extends StatelessWidget {
           const SizedBox(width: 8),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          await Future.delayed(const Duration(milliseconds: 600));
-        },
-        color: AppColors.primary,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Welcome Header
-              Text(
-                'Welcome, ABC Marketing 👋',
-                style: GoogleFonts.poppins(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                "Here's what's happening today.",
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 18),
-
-              // Hero Total Projects Card
-              HeroTotalProjectsCard(
-                totalProjects: 3,
-                onTap: () {
-                  if (onNavigateToTab != null) {
-                    onNavigateToTab!(1); // Go to Projects tab
-                  }
-                },
-              ),
-              const SizedBox(height: 14),
-
-              // Metric Cards Grid
-              Row(
-                children: [
-                  Expanded(
-                    child: MetricCard(
-                      title: 'Available',
-                      value: '128',
-                      dotColor: AppColors.available,
-                      onTap: () {
-                        inventoryProvider.setStatusFilter('Available');
-                        if (onNavigateToTab != null) onNavigateToTab!(2);
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: MetricCard(
-                      title: 'Blocked',
-                      value: '15',
-                      dotColor: AppColors.blocked,
-                      onTap: () {
-                        inventoryProvider.setStatusFilter('Blocked');
-                        if (onNavigateToTab != null) onNavigateToTab!(2);
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: MetricCard(
-                      title: 'Booked',
-                      value: '82',
-                      dotColor: AppColors.booked,
-                      onTap: () {
-                        inventoryProvider.setStatusFilter('Booked');
-                        if (onNavigateToTab != null) onNavigateToTab!(2);
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: MetricCard(
-                      title: 'Registered',
-                      value: '25',
-                      dotColor: AppColors.registered,
-                      onTap: () {
-                        inventoryProvider.setStatusFilter('Registered');
-                        if (onNavigateToTab != null) onNavigateToTab!(2);
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-
-              // Recent Projects Section Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Recent Projects',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  InkWell(
-                    onTap: () {
-                      if (onNavigateToTab != null) {
-                        onNavigateToTab!(1); // Go to projects tab
-                      }
-                    },
-                    child: Text(
-                      'View All',
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              onRefresh: () async {
+                await dashboardProvider.refresh();
+              },
+              color: AppColors.primary,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Welcome Header
+                    Text(
+                      dashboardData?.greeting ?? 'Welcome, ABC Marketing 👋',
                       style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.primary,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
                       ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
+                    const SizedBox(height: 2),
+                    Text(
+                      "Here's what's happening today.",
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 18),
 
-              // Projects List
-              ...projects.take(3).map((project) => ProjectCard(
-                    project: project,
-                    showTotalUnits: false,
-                    onTap: () {
-                      inventoryProvider.setSelectedProject(project.id);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => InventoryListPage(project: project),
+                    // Hero Total Projects Card
+                    HeroTotalProjectsCard(
+                      totalProjects: dashboardData?.totalProjects ?? 0,
+                      onTap: () {
+                        if (widget.onNavigateToTab != null) {
+                          widget.onNavigateToTab!(1); // Go to Projects tab
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Metric Cards Grid
+                    Row(
+                      children: [
+                        Expanded(
+                          child: MetricCard(
+                            title: 'Available',
+                            value: dashboardData?.inventory.available.toString() ?? '0',
+                            dotColor: AppColors.available,
+                            onTap: () {
+                              inventoryProvider.setStatusFilter('Available');
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const InventoryListPage()),
+                              );
+                            },
+                          ),
                         ),
-                      );
-                    },
-                  )),
-              const SizedBox(height: 20),
-            ],
-          ),
-        ),
-      ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: MetricCard(
+                            title: 'Blocked',
+                            value: dashboardData?.inventory.blocked.toString() ?? '0',
+                            dotColor: AppColors.blocked,
+                            onTap: () {
+                              inventoryProvider.setStatusFilter('Blocked');
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const InventoryListPage()),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: MetricCard(
+                            title: 'Booked',
+                            value: dashboardData?.inventory.booked.toString() ?? '0',
+                            dotColor: AppColors.booked,
+                            onTap: () {
+                              inventoryProvider.setStatusFilter('Booked');
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const InventoryListPage()),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: MetricCard(
+                            title: 'Registered',
+                            value: dashboardData?.inventory.total != null 
+                              ? (dashboardData!.inventory.total - dashboardData.inventory.available - dashboardData.inventory.blocked - dashboardData.inventory.booked).toString() 
+                              : '0',
+                            dotColor: AppColors.registered,
+                            onTap: () {
+                              inventoryProvider.setStatusFilter('Registered');
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const InventoryListPage()),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Recent Projects Section Header
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Recent Projects',
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        InkWell(
+                          onTap: () {
+                            if (widget.onNavigateToTab != null) {
+                              widget.onNavigateToTab!(1); // Go to projects tab
+                            }
+                          },
+                          child: Text(
+                            'View All',
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Projects List
+                    if (dashboardData != null)
+                      ...dashboardData.recentProjects.take(3).map((project) => ProjectCard(
+                            project: project,
+                            showTotalUnits: false,
+                            onTap: () {
+                              inventoryProvider.setSelectedProject(project.id);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => InventoryListPage(project: project),
+                                ),
+                              );
+                            },
+                          )),
+                    const SizedBox(height: 20),
+                  ],
+                ),
+              ),
+            ),
     );
   }
 }
+

@@ -6,7 +6,6 @@ import '../../../../core/widgets/syncr_drawer.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../dashboard/presentation/pages/admin_dashboard_view.dart';
 import '../../../dashboard/presentation/pages/team_dashboard_view.dart';
-import '../../../inventory/presentation/pages/inventory_list_page.dart';
 import '../../../more/presentation/pages/more_page.dart';
 import '../../../projects/presentation/pages/projects_page.dart';
 import '../../../requests/presentation/pages/my_requests_page.dart';
@@ -15,10 +14,7 @@ import '../../../teams/presentation/pages/marketing_teams_page.dart';
 class MainShellPage extends StatefulWidget {
   final int initialIndex;
 
-  const MainShellPage({
-    super.key,
-    this.initialIndex = 0,
-  });
+  const MainShellPage({super.key, this.initialIndex = 0});
 
   @override
   State<MainShellPage> createState() => _MainShellPageState();
@@ -46,7 +42,6 @@ class _MainShellPageState extends State<MainShellPage> {
               onNavigateToTab: (index) => setState(() => _currentIndex = index),
             ),
             const ProjectsPage(),
-            const InventoryListPage(),
             const MarketingTeamsPage(),
             const MorePage(),
           ]
@@ -55,7 +50,6 @@ class _MainShellPageState extends State<MainShellPage> {
               onNavigateToTab: (index) => setState(() => _currentIndex = index),
             ),
             const ProjectsPage(),
-            const InventoryListPage(),
             const MyRequestsPage(),
             const MorePage(),
           ];
@@ -99,16 +93,13 @@ class _MainShellPageState extends State<MainShellPage> {
                 ),
                 _buildNavItem(
                   index: 2,
-                  icon: Icons.list_alt_rounded,
-                  label: 'Inventory',
-                ),
-                _buildNavItem(
-                  index: 3,
-                  icon: isAdmin ? Icons.group_rounded : Icons.assignment_rounded,
+                  icon: isAdmin
+                      ? Icons.group_rounded
+                      : Icons.assignment_rounded,
                   label: isAdmin ? 'Teams' : 'Requests',
                 ),
                 _buildNavItem(
-                  index: 4,
+                  index: 3,
                   icon: Icons.more_horiz_rounded,
                   label: 'More',
                 ),

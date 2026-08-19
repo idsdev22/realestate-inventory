@@ -6,14 +6,14 @@ import '../../../../core/widgets/syncr_badge.dart';
 import '../../../activity/presentation/pages/activity_log_page.dart';
 import '../../../auth/presentation/pages/login_page.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
-import '../../../company_admin/presentation/pages/add_edit_company_page.dart';
 import '../../../company_admin/presentation/pages/companies_list_page.dart';
-import '../../../company_admin/presentation/pages/company_admin_page.dart';
 import '../../../inventory/presentation/pages/add_edit_unit_page.dart';
 import '../../../inventory/presentation/pages/inventory_overview_page.dart';
 import '../../../requests/presentation/pages/my_requests_page.dart';
 import '../../../teams/presentation/pages/marketing_teams_page.dart';
 import '../../../teams/presentation/pages/team_users_page.dart';
+
+import '../../../requests/presentation/pages/all_requests_page.dart';
 
 class MorePage extends StatelessWidget {
   const MorePage({super.key});
@@ -69,7 +69,9 @@ class MorePage extends StatelessWidget {
                     radius: 28,
                     backgroundColor: AppColors.primaryLight,
                     child: Icon(
-                      isAdmin ? Icons.admin_panel_settings_rounded : Icons.business_center_rounded,
+                      isAdmin
+                          ? Icons.admin_panel_settings_rounded
+                          : Icons.business_center_rounded,
                       color: AppColors.primary,
                       size: 28,
                     ),
@@ -89,7 +91,10 @@ class MorePage extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          authProvider.user?.email ?? (isAdmin ? 'admin@syncr.test' : 'abcmarketing@gmail.com'),
+                          authProvider.user?.email ??
+                              (isAdmin
+                                  ? 'admin@syncr.test'
+                                  : 'abcmarketing@gmail.com'),
                           style: GoogleFonts.poppins(
                             fontSize: 12,
                             color: AppColors.textSecondary,
@@ -98,7 +103,9 @@ class MorePage extends StatelessWidget {
                         const SizedBox(height: 6),
                         SyncrBadge(
                           label: isAdmin ? 'Promoter Admin' : 'Marketing Team',
-                          type: isAdmin ? SyncrBadgeType.registered : SyncrBadgeType.booked,
+                          type: isAdmin
+                              ? SyncrBadgeType.registered
+                              : SyncrBadgeType.booked,
                         ),
                       ],
                     ),
@@ -121,7 +128,11 @@ class MorePage extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.swap_horiz_rounded, color: AppColors.primary, size: 20),
+                      const Icon(
+                        Icons.swap_horiz_rounded,
+                        color: AppColors.primary,
+                        size: 20,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         'Switch Active Mode',
@@ -140,11 +151,17 @@ class MorePage extends StatelessWidget {
                         child: ElevatedButton(
                           onPressed: () => authProvider.setRole(UserRole.admin),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: isAdmin ? AppColors.primary : Colors.white,
-                            foregroundColor: isAdmin ? Colors.white : AppColors.textPrimary,
+                            backgroundColor: isAdmin
+                                ? AppColors.primary
+                                : Colors.white,
+                            foregroundColor: isAdmin
+                                ? Colors.white
+                                : AppColors.textPrimary,
                             elevation: 0,
                             side: BorderSide(
-                              color: isAdmin ? AppColors.primary : AppColors.border,
+                              color: isAdmin
+                                  ? AppColors.primary
+                                  : AppColors.border,
                             ),
                           ),
                           child: const Text('Admin Panel'),
@@ -153,13 +170,20 @@ class MorePage extends StatelessWidget {
                       const SizedBox(width: 10),
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: () => authProvider.setRole(UserRole.marketingTeam),
+                          onPressed: () =>
+                              authProvider.setRole(UserRole.marketingTeam),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: !isAdmin ? AppColors.primary : Colors.white,
-                            foregroundColor: !isAdmin ? Colors.white : AppColors.textPrimary,
+                            backgroundColor: !isAdmin
+                                ? AppColors.primary
+                                : Colors.white,
+                            foregroundColor: !isAdmin
+                                ? Colors.white
+                                : AppColors.textPrimary,
                             elevation: 0,
                             side: BorderSide(
-                              color: !isAdmin ? AppColors.primary : AppColors.border,
+                              color: !isAdmin
+                                  ? AppColors.primary
+                                  : AppColors.border,
                             ),
                           ),
                           child: const Text('Marketing Team'),
@@ -172,7 +196,6 @@ class MorePage extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
-            // Promoter Administration Section (For promoter_admin)
             if (isAdmin) ...[
               _buildSection(
                 title: 'Promoter Administration',
@@ -180,33 +203,27 @@ class MorePage extends StatelessWidget {
                   _buildMenuItem(
                     icon: Icons.corporate_fare_rounded,
                     title: 'Marketing Companies',
-                    subtitle: 'Manage partner agencies, permissions & allocations',
+                    subtitle:
+                        'Manage partner agencies, permissions & allocations',
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const CompaniesListPage()),
+                        MaterialPageRoute(
+                          builder: (_) => const CompaniesListPage(),
+                        ),
                       );
                     },
                   ),
                   _buildMenuItem(
-                    icon: Icons.add_business_rounded,
-                    title: 'Add Marketing Company',
-                    subtitle: 'Register new marketing company (POST /companies)',
+                    icon: Icons.assignment_turned_in_outlined,
+                    title: 'All Requests',
+                    subtitle: 'Manage all block and booking requests globally',
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const AddEditCompanyPage()),
-                      );
-                    },
-                  ),
-                  _buildMenuItem(
-                    icon: Icons.admin_panel_settings_outlined,
-                    title: 'Company Admin Console',
-                    subtitle: 'Promoter administrative control panel',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const CompanyAdminPage()),
+                        MaterialPageRoute(
+                          builder: (_) => const AllRequestsPage(),
+                        ),
                       );
                     },
                   ),
@@ -226,7 +243,9 @@ class MorePage extends StatelessWidget {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const InventoryOverviewPage()),
+                      MaterialPageRoute(
+                        builder: (_) => const InventoryOverviewPage(),
+                      ),
                     );
                   },
                 ),
@@ -237,7 +256,9 @@ class MorePage extends StatelessWidget {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const AddEditUnitPage()),
+                      MaterialPageRoute(
+                        builder: (_) => const AddEditUnitPage(),
+                      ),
                     );
                   },
                 ),
@@ -248,7 +269,9 @@ class MorePage extends StatelessWidget {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const MarketingTeamsPage()),
+                      MaterialPageRoute(
+                        builder: (_) => const MarketingTeamsPage(),
+                      ),
                     );
                   },
                 ),
@@ -281,7 +304,9 @@ class MorePage extends StatelessWidget {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const ActivityLogPage()),
+                      MaterialPageRoute(
+                        builder: (_) => const ActivityLogPage(),
+                      ),
                     );
                   },
                 ),
@@ -319,7 +344,9 @@ class MorePage extends StatelessWidget {
                   subtitle: 'Documentation & contact desk',
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Help desk: support@syncr.app')),
+                      const SnackBar(
+                        content: Text('Help desk: support@syncr.app'),
+                      ),
                     );
                   },
                 ),
@@ -335,7 +362,10 @@ class MorePage extends StatelessWidget {
                 border: Border.all(color: AppColors.borderLight),
               ),
               child: ListTile(
-                leading: const Icon(Icons.logout_rounded, color: AppColors.rejected),
+                leading: const Icon(
+                  Icons.logout_rounded,
+                  color: AppColors.rejected,
+                ),
                 title: Text(
                   'Logout from Session',
                   style: GoogleFonts.poppins(
@@ -362,10 +392,7 @@ class MorePage extends StatelessWidget {
     );
   }
 
-  Widget _buildSection({
-    required String title,
-    required List<Widget> items,
-  }) {
+  Widget _buildSection({required String title, required List<Widget> items}) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -423,7 +450,11 @@ class MorePage extends StatelessWidget {
           color: AppColors.textSecondary,
         ),
       ),
-      trailing: const Icon(Icons.chevron_right_rounded, size: 20, color: AppColors.textMuted),
+      trailing: const Icon(
+        Icons.chevron_right_rounded,
+        size: 20,
+        color: AppColors.textMuted,
+      ),
       onTap: onTap,
     );
   }

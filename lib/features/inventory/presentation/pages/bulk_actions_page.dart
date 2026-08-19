@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../activity/data/models/activity_log_model.dart';
 import '../../../teams/presentation/providers/teams_provider.dart';
 import 'package:realestate_inventory/features/inventory/data/models/unit_model.dart';
 import '../providers/inventory_provider.dart';
@@ -10,10 +9,7 @@ import '../providers/inventory_provider.dart';
 class BulkActionsPage extends StatefulWidget {
   final List<UnitModel> selectedUnits;
 
-  const BulkActionsPage({
-    super.key,
-    required this.selectedUnits,
-  });
+  const BulkActionsPage({super.key, required this.selectedUnits});
 
   @override
   State<BulkActionsPage> createState() => _BulkActionsPageState();
@@ -52,12 +48,14 @@ class _BulkActionsPageState extends State<BulkActionsPage> {
 
   void _applyBulkUpdate() {
     final inventoryProvider = context.read<InventoryProvider>();
-    final teamsProvider = context.read<TeamsProvider>();
+    context.read<TeamsProvider>();
 
     final updatedCount = _activeSelectedIds.length;
     if (updatedCount == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select at least one unit to update')),
+        const SnackBar(
+          content: Text('Please select at least one unit to update'),
+        ),
       );
       return;
     }
@@ -70,24 +68,13 @@ class _BulkActionsPageState extends State<BulkActionsPage> {
           : null,
     );
 
-    teamsProvider.addActivity(
-      ActivityLogModel(
-        id: 'act_${DateTime.now().millisecondsSinceEpoch}',
-        description: 'Status changed to $_newStatus for $updatedCount units by Admin',
-        actor: 'Admin',
-        time: 'Just now',
-        group: 'Today',
-        type: _newStatus == 'Blocked'
-            ? ActivityType.statusBlocked
-            : ActivityType.statusBooked,
-      ),
-    );
-
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         backgroundColor: AppColors.available,
-        content: Text('Successfully updated $updatedCount units to "$_newStatus"!'),
+        content: Text(
+          'Successfully updated $updatedCount units to "$_newStatus"!',
+        ),
       ),
     );
   }
@@ -193,9 +180,7 @@ class _BulkActionsPageState extends State<BulkActionsPage> {
               controller: _remarksController,
               maxLines: 2,
               style: GoogleFonts.poppins(fontSize: 14),
-              decoration: const InputDecoration(
-                hintText: 'Enter remarks',
-              ),
+              decoration: const InputDecoration(hintText: 'Enter remarks'),
             ),
             const SizedBox(height: 20),
 
@@ -239,10 +224,13 @@ class _BulkActionsPageState extends State<BulkActionsPage> {
                 TextButton(
                   onPressed: () {
                     setState(() {
-                      if (_activeSelectedIds.length == widget.selectedUnits.length) {
+                      if (_activeSelectedIds.length ==
+                          widget.selectedUnits.length) {
                         _activeSelectedIds.clear();
                       } else {
-                        _activeSelectedIds = widget.selectedUnits.map((u) => u.id).toSet();
+                        _activeSelectedIds = widget.selectedUnits
+                            .map((u) => u.id)
+                            .toSet();
                       }
                     });
                   },
@@ -266,12 +254,17 @@ class _BulkActionsPageState extends State<BulkActionsPage> {
               final isChecked = _activeSelectedIds.contains(unit.id);
               return Container(
                 margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: isChecked ? AppColors.primarySurface : Colors.white,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: isChecked ? AppColors.primaryLight : AppColors.borderLight,
+                    color: isChecked
+                        ? AppColors.primaryLight
+                        : AppColors.borderLight,
                   ),
                 ),
                 child: Row(
@@ -288,7 +281,9 @@ class _BulkActionsPageState extends State<BulkActionsPage> {
                         });
                       },
                       activeColor: AppColors.primary,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4),
+                      ),
                     ),
                     const SizedBox(width: 6),
                     Text(
@@ -352,10 +347,7 @@ class _BulkActionsPageState extends State<BulkActionsPage> {
             color: AppColors.textPrimary,
           ),
           items: items.map((val) {
-            return DropdownMenuItem<String>(
-              value: val,
-              child: Text(val),
-            );
+            return DropdownMenuItem<String>(value: val, child: Text(val));
           }).toList(),
           onChanged: onChanged,
         ),

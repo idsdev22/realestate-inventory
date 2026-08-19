@@ -6,8 +6,13 @@ class ProjectService {
 
   ProjectService(this._apiService);
 
-  Future<List<ProjectModel>> getProjects() async {
-    final response = await _apiService.get('/projects');
+  Future<List<ProjectModel>> getProjects({
+    int page = 1,
+    int limit = 1000,
+    String q = '',
+  }) async {
+    final queryParams = '?page=$page&limit=$limit&q=$q';
+    final response = await _apiService.get('/projects$queryParams');
     if (response is List) {
       return response
           .whereType<Map<String, dynamic>>()
@@ -17,7 +22,8 @@ class ProjectService {
     if (response is Map<String, dynamic>) {
       var data = response['data'] ?? response['projects'] ?? response['list'];
       if (data is Map<String, dynamic>) {
-        data = data['items'] ?? data['projects'] ?? data['data'] ?? data['list'];
+        data =
+            data['items'] ?? data['projects'] ?? data['data'] ?? data['list'];
       }
       if (data is List) {
         return data
@@ -41,7 +47,10 @@ class ProjectService {
   }
 
   Future<ProjectModel?> createProject(ProjectModel project) async {
-    final response = await _apiService.post('/projects', body: project.toJson());
+    final response = await _apiService.post(
+      '/projects',
+      body: project.toJson(),
+    );
     if (response is Map<String, dynamic>) {
       final data = response['data'] ?? response['project'] ?? response;
       if (data is Map<String, dynamic>) {
@@ -52,7 +61,10 @@ class ProjectService {
   }
 
   Future<ProjectModel?> updateProject(int id, ProjectModel project) async {
-    final response = await _apiService.put('/projects/$id', body: project.toJson());
+    final response = await _apiService.put(
+      '/projects/$id',
+      body: project.toJson(),
+    );
     if (response is Map<String, dynamic>) {
       final data = response['data'] ?? response['project'] ?? response;
       if (data is Map<String, dynamic>) {

@@ -5,13 +5,17 @@ import 'package:realestate_inventory/features/projects/data/services/project_ser
 import 'package:realestate_inventory/features/inventory/data/services/inventory_service.dart';
 
 class InventoryProvider extends ChangeNotifier {
-  List<ProjectModel> _projects = [];
-  List<UnitModel> _units = [];
+  final List<ProjectModel> _projects = [];
+  final List<UnitModel> _units = [];
   int? _selectedProjectId;
   String _selectedStatusFilter = 'All';
   String _searchQuery = '';
   final Set<int> _selectedUnitIds = {};
   bool _isLoading = false;
+  int _currentPage = 1;
+  bool _hasMore = true;
+  int _currentProjectPage = 1;
+  bool _hasMoreProjects = true;
   final ProjectService? _projectService;
   final InventoryService? _inventoryService;
 
@@ -28,13 +32,34 @@ class InventoryProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> loadInventory() async {
+  Future<void> loadInventory({bool reset = false}) async {
     if (_inventoryService == null) return;
+    
+    if (reset) {
+      _currentPage = 1;
+      _hasMore = true;
+      _units.clear();
+    }
+    
+    if (!_hasMore || _isLoading) return;
+
     _isLoading = true;
     notifyListeners();
     try {
-      final fetchedUnits = await _inventoryService.getInventory();
-      _units = fetchedUnits;
+      final fetchedUnits = await _inventoryService.getInventory(
+        page: _currentPage,
+        limit: 1000,
+        q: _searchQuery,
+        status: _selectedStatusFilter,
+        projectId: _selectedProjectId?.toString(),
+      );
+      
+      if (fetchedUnits.length < 1000) {
+        _hasMore = false;
+      }
+      
+      _units.addAll(fetchedUnits);
+      _currentPage++;
     } catch (e) {
       debugPrint('Error loading inventory: $e');
     } finally {
@@ -43,13 +68,31 @@ class InventoryProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> loadProjects() async {
+  Future<void> loadProjects({bool reset = false}) async {
     if (_projectService == null) return;
+    
+    if (reset) {
+      _currentProjectPage = 1;
+      _hasMoreProjects = true;
+      _projects.clear();
+    }
+    
+    if (!_hasMoreProjects || _isLoading) return;
+    
     _isLoading = true;
     notifyListeners();
     try {
-      final fetchedProjects = await _projectService.getProjects();
-      _projects = fetchedProjects;
+      final fetchedProjects = await _projectService.getProjects(
+        page: _currentProjectPage,
+        limit: 1000,
+      );
+      
+      if (fetchedProjects.length < 1000) {
+        _hasMoreProjects = false;
+      }
+      
+      _projects.addAll(fetchedProjects);
+      _currentProjectPage++;
     } catch (e) {
       debugPrint('Error loading projects: $e');
     } finally {
@@ -65,6 +108,8 @@ class InventoryProvider extends ChangeNotifier {
   String get searchQuery => _searchQuery;
   Set<int> get selectedUnitIds => _selectedUnitIds;
   bool get isLoading => _isLoading;
+  bool get hasMore => _hasMore;
+  bool get hasMoreProjects => _hasMoreProjects;
 
   ProjectModel? get selectedProject {
     if (_selectedProjectId == null) {
@@ -137,16 +182,19 @@ class InventoryProvider extends ChangeNotifier {
   void setSelectedProject(int? projectId) {
     _selectedProjectId = projectId;
     notifyListeners();
+    loadInventory(reset: true);
   }
 
   void setStatusFilter(String status) {
     _selectedStatusFilter = status;
     notifyListeners();
+    loadInventory(reset: true);
   }
 
   void setSearchQuery(String query) {
     _searchQuery = query;
     notifyListeners();
+    loadInventory(reset: true);
   }
 
   void toggleFavorite(int unitId) {

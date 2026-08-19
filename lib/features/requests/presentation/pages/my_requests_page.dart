@@ -75,7 +75,7 @@ class MyRequestsPage extends StatelessWidget {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () {
-                        requestsProvider.updateRequestStatus(request.id, 'Rejected');
+                        requestsProvider.reviewRequest(request.id, 'Rejected');
                         Navigator.pop(ctx);
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Request rejected')),
@@ -96,7 +96,7 @@ class MyRequestsPage extends StatelessWidget {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        requestsProvider.updateRequestStatus(request.id, 'Approved');
+                        requestsProvider.reviewRequest(request.id, 'Approved');
                         Navigator.pop(ctx);
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(

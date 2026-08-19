@@ -3,10 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/syncr_badge.dart';
-import '../../../activity/data/models/activity_log_model.dart';
 import 'package:realestate_inventory/features/inventory/data/models/unit_model.dart';
 import 'package:realestate_inventory/features/inventory/presentation/providers/inventory_provider.dart';
-import 'package:realestate_inventory/features/requests/data/models/block_request_model.dart';
 import 'package:realestate_inventory/features/teams/presentation/providers/teams_provider.dart';
 import '../providers/requests_provider.dart';
 import 'my_requests_page.dart';
@@ -14,10 +12,7 @@ import 'my_requests_page.dart';
 class RequestToBlockPage extends StatefulWidget {
   final UnitModel unit;
 
-  const RequestToBlockPage({
-    super.key,
-    required this.unit,
-  });
+  const RequestToBlockPage({super.key, required this.unit});
 
   @override
   State<RequestToBlockPage> createState() => _RequestToBlockPageState();
@@ -28,8 +23,11 @@ class _RequestToBlockPageState extends State<RequestToBlockPage> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _dateController = TextEditingController(text: '12 Aug 2024');
+  final TextEditingController _dateController = TextEditingController(
+    text: '12 Aug 2024',
+  );
   final TextEditingController _remarksController = TextEditingController();
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -63,69 +61,88 @@ class _RequestToBlockPageState extends State<RequestToBlockPage> {
     );
 
     if (picked != null) {
-      final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      final months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
       setState(() {
-        _dateController.text = '${picked.day.toString().padLeft(2, '0')} ${months[picked.month - 1]} ${picked.year}';
+        _dateController.text =
+            '${picked.day.toString().padLeft(2, '0')} ${months[picked.month - 1]} ${picked.year}';
       });
     }
   }
 
-  void _submitRequest() {
+  Future<void> _submitRequest() async {
     if (_formKey.currentState?.validate() ?? false) {
+      setState(() {
+        _isSubmitting = true;
+      });
+
       final requestsProvider = context.read<RequestsProvider>();
       final inventoryProvider = context.read<InventoryProvider>();
-      final teamsProvider = context.read<TeamsProvider>();
+      context.read<TeamsProvider>();
 
-      final newRequest = BlockRequestModel(
-        id: 'req_${DateTime.now().millisecondsSinceEpoch}',
-        unitNo: widget.unit.unitNo,
-        projectName: widget.unit.projectName,
-        areaSqFt: widget.unit.areaSqFt.toInt(),
-        facing: widget.unit.facing ?? '',
-        roadWidth: '${widget.unit.roadWidthFt ?? 30} ft Road',
-        formattedPrice: widget.unit.formattedPrice,
-        customerName: _nameController.text.trim(),
-        customerPhone: _phoneController.text.trim(),
-        customerEmail: _emailController.text.trim().isNotEmpty ? _emailController.text.trim() : null,
-        expectedBookingDate: _dateController.text.trim(),
-        remarks: _remarksController.text.trim().isNotEmpty ? _remarksController.text.trim() : null,
-        status: 'Pending',
-        requestedDate: 'Today',
-      );
+      final requestData = {
+        'unit_id': widget.unit.id,
+        'customer_name': _nameController.text.trim(),
+        'customer_phone': _phoneController.text.trim(),
+        if (_emailController.text.trim().isNotEmpty)
+          'customer_email': _emailController.text.trim(),
+        'expected_booking_date': _dateController.text.trim(),
+        if (_remarksController.text.trim().isNotEmpty)
+          'remarks': _remarksController.text.trim(),
+      };
 
-      requestsProvider.addRequest(newRequest);
+      final success = await requestsProvider.createRequest(requestData);
 
-      // Update unit status to Blocked
-      inventoryProvider.updateUnit(
-        widget.unit.copyWith(
-          status: 'Blocked',
-          remarks: 'Blocked for ${_nameController.text.trim()}',
-        ),
-      );
+      if (!mounted) return;
 
-      // Log activity
-      teamsProvider.addActivity(
-        ActivityLogModel(
-          id: 'act_${DateTime.now().millisecondsSinceEpoch}',
-          description: '${widget.unit.unitNo} block requested for ${_nameController.text.trim()} by ABC Marketing',
-          actor: 'ABC Marketing',
-          time: 'Just now',
-          group: 'Today',
-          type: ActivityType.statusBlocked,
-        ),
-      );
+      setState(() {
+        _isSubmitting = false;
+      });
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const MyRequestsPage()),
-      );
+      if (success) {
+        // Update unit status locally to keep UI responsive
+        inventoryProvider.updateUnit(
+          widget.unit.copyWith(
+            status: 'Blocked',
+            remarks: 'Blocked for ${_nameController.text.trim()}',
+          ),
+        );
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: AppColors.available,
-          content: Text('Block request submitted for unit ${widget.unit.unitNo}!'),
-        ),
-      );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const MyRequestsPage()),
+        );
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: AppColors.available,
+            content: Text(
+              'Block request submitted for unit ${widget.unit.unitNo}!',
+            ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: AppColors.rejected,
+            content: Text(
+              requestsProvider.errorMessage ?? 'Failed to submit request',
+            ),
+          ),
+        );
+      }
     }
   }
 
@@ -140,7 +157,10 @@ class _RequestToBlockPageState extends State<RequestToBlockPage> {
         elevation: 0,
         scrolledUnderElevation: 0.5,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+          icon: const Icon(
+            Icons.arrow_back_rounded,
+            color: AppColors.textPrimary,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -215,8 +235,12 @@ class _RequestToBlockPageState extends State<RequestToBlockPage> {
                             ),
                           ),
                           Icon(
-                            unit.isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                            color: unit.isFavorite ? AppColors.rejected : AppColors.textMuted,
+                            unit.isFavorite
+                                ? Icons.favorite_rounded
+                                : Icons.favorite_border_rounded,
+                            color: unit.isFavorite
+                                ? AppColors.rejected
+                                : AppColors.textMuted,
                             size: 20,
                           ),
                         ],
@@ -242,7 +266,9 @@ class _RequestToBlockPageState extends State<RequestToBlockPage> {
                   decoration: const InputDecoration(
                     hintText: 'Enter customer name',
                   ),
-                  validator: (v) => v?.trim().isEmpty ?? true ? 'Please enter customer name' : null,
+                  validator: (v) => v?.trim().isEmpty ?? true
+                      ? 'Please enter customer name'
+                      : null,
                 ),
                 const SizedBox(height: 16),
 
@@ -263,7 +289,9 @@ class _RequestToBlockPageState extends State<RequestToBlockPage> {
                   decoration: const InputDecoration(
                     hintText: 'Enter phone number',
                   ),
-                  validator: (v) => v?.trim().isEmpty ?? true ? 'Please enter customer phone' : null,
+                  validator: (v) => v?.trim().isEmpty ?? true
+                      ? 'Please enter customer phone'
+                      : null,
                 ),
                 const SizedBox(height: 16),
 
@@ -305,11 +333,17 @@ class _RequestToBlockPageState extends State<RequestToBlockPage> {
                   decoration: InputDecoration(
                     hintText: 'Select date',
                     suffixIcon: IconButton(
-                      icon: const Icon(Icons.calendar_today_outlined, size: 20, color: AppColors.iconColor),
+                      icon: const Icon(
+                        Icons.calendar_today_outlined,
+                        size: 20,
+                        color: AppColors.iconColor,
+                      ),
                       onPressed: _selectDate,
                     ),
                   ),
-                  validator: (v) => v?.trim().isEmpty ?? true ? 'Please select expected booking date' : null,
+                  validator: (v) => v?.trim().isEmpty ?? true
+                      ? 'Please select expected booking date'
+                      : null,
                 ),
                 const SizedBox(height: 16),
 
@@ -337,7 +371,7 @@ class _RequestToBlockPageState extends State<RequestToBlockPage> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: _submitRequest,
+                    onPressed: _isSubmitting ? null : _submitRequest,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
@@ -347,13 +381,24 @@ class _RequestToBlockPageState extends State<RequestToBlockPage> {
                       ),
                       elevation: 0,
                     ),
-                    child: Text(
-                      'Submit Request',
-                      style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    child: _isSubmitting
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          )
+                        : Text(
+                            'Submit Request',
+                            style: GoogleFonts.poppins(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                   ),
                 ),
                 const SizedBox(height: 24),

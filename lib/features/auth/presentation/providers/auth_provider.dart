@@ -7,6 +7,7 @@ import '../../data/services/auth_service.dart';
 enum UserRole {
   admin,
   marketingTeam,
+  staffs,
 }
 
 class AuthProvider extends ChangeNotifier {
@@ -38,8 +39,10 @@ class AuthProvider extends ChangeNotifier {
   String get displayName {
     if (_currentRole == UserRole.admin) {
       return 'Admin';
-    } else {
+    } else if (_currentRole == UserRole.marketingTeam) {
       return 'ABC Marketing';
+    } else {
+      return 'Staff';
     }
   }
 
@@ -47,8 +50,16 @@ class AuthProvider extends ChangeNotifier {
     _currentRole = role;
     if (_user != null) {
       _user = _user!.copyWith(
-        role: role == UserRole.admin ? 'promoter_admin' : 'marketing_team',
-        email: role == UserRole.admin ? 'admin@syncr.test' : 'abcmarketing@gmail.com',
+        role: role == UserRole.admin 
+            ? 'promoter_admin' 
+            : role == UserRole.marketingTeam 
+                ? 'marketing_team' 
+                : 'staff',
+        email: role == UserRole.admin 
+            ? 'admin@syncr.test' 
+            : role == UserRole.marketingTeam 
+                ? 'abcmarketing@gmail.com' 
+                : 'staff@syncr.test',
       );
     }
     notifyListeners();
@@ -70,6 +81,8 @@ class AuthProvider extends ChangeNotifier {
       if (_token != null && _token!.isNotEmpty) {
         if (_user != null && _user!.role == 'marketing_team') {
           _currentRole = UserRole.marketingTeam;
+        } else if (_user != null && _user!.role == 'staff') {
+          _currentRole = UserRole.staffs;
         } else {
           _currentRole = UserRole.admin;
         }
@@ -104,7 +117,11 @@ class AuthProvider extends ChangeNotifier {
         _token = response.token;
         _user = response.user ?? UserModel(
           email: email,
-          role: selectedRole == UserRole.admin ? 'promoter_admin' : 'marketing_team',
+          role: selectedRole == UserRole.admin 
+              ? 'promoter_admin' 
+              : selectedRole == UserRole.marketingTeam 
+                  ? 'marketing_team' 
+                  : 'staff',
         );
 
         await _storageService.saveToken(_token!);
@@ -167,6 +184,8 @@ class AuthProvider extends ChangeNotifier {
         _user = user;
         if (user.role == 'marketing_team') {
           _currentRole = UserRole.marketingTeam;
+        } else if (user.role == 'staff') {
+          _currentRole = UserRole.staffs;
         }
         await _storageService.saveUser(user);
         notifyListeners();

@@ -6,24 +6,31 @@ class CompanyService {
 
   CompanyService(this._apiService);
 
-  /// GET /companies - Fetch all marketing companies
-  Future<List<CompanyModel>> getCompanies() async {
-    final response = await _apiService.get('/companies');
+  /// GET /companies - Fetch all marketing companies with optional pagination & query
+  Future<List<CompanyModel>> getCompanies({
+    int page = 1,
+    int limit = 100,
+    String q = '',
+  }) async {
+    final queryParams = '?page=$page&limit=$limit&q=${Uri.encodeComponent(q)}';
+    final response = await _apiService.get('/companies$queryParams');
 
-    if (response is Map<String, dynamic>) {
-      if (response['data'] is List) {
-        return (response['data'] as List)
-            .map((item) => CompanyModel.fromJson(item as Map<String, dynamic>))
-            .toList();
-      } else if (response['companies'] is List) {
-        return (response['companies'] as List)
-            .map((item) => CompanyModel.fromJson(item as Map<String, dynamic>))
+    if (response is List) {
+      return response
+          .whereType<Map<String, dynamic>>()
+          .map((item) => CompanyModel.fromJson(item))
+          .toList();
+    } else if (response is Map<String, dynamic>) {
+      var data = response['data'] ?? response['companies'] ?? response['list'];
+      if (data is Map<String, dynamic>) {
+        data = data['items'] ?? data['companies'] ?? data['data'] ?? data['list'];
+      }
+      if (data is List) {
+        return data
+            .whereType<Map<String, dynamic>>()
+            .map((item) => CompanyModel.fromJson(item))
             .toList();
       }
-    } else if (response is List) {
-      return response
-          .map((item) => CompanyModel.fromJson(item as Map<String, dynamic>))
-          .toList();
     }
     return [];
   }

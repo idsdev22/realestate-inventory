@@ -178,11 +178,20 @@ class ApiService {
       AppLogger.v('Response Data ($endpoint): $responseData');
       return responseData;
     } else {
-      final message = responseData is Map<String, dynamic>
-          ? (responseData['message'] ??
-                responseData['error'] ??
-                'Request failed with status ${response.statusCode}')
-          : 'Request failed with status ${response.statusCode}';
+      dynamic extractedMessage;
+      if (responseData is Map<String, dynamic>) {
+        if (responseData['message'] != null) {
+          extractedMessage = responseData['message'];
+        } else if (responseData['error'] != null) {
+          if (responseData['error'] is Map) {
+            extractedMessage = responseData['error']['message'] ?? responseData['error'];
+          } else {
+            extractedMessage = responseData['error'];
+          }
+        }
+      }
+
+      final message = extractedMessage ?? 'Request failed with status ${response.statusCode}';
 
       AppLogger.w('API Error ($endpoint) [${response.statusCode}]: $message');
       throw ApiException(

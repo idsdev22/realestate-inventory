@@ -6,8 +6,16 @@ class InventoryService {
 
   InventoryService(this._apiService);
 
-  Future<List<UnitModel>> getInventory({String? status}) async {
-    final queryParams = status != null && status != 'All' ? '?status=${status.toLowerCase()}' : '';
+  Future<List<UnitModel>> getInventory({
+    int page = 1,
+    int limit = 1000,
+    String q = '',
+    String? status,
+    String? projectId,
+  }) async {
+    final statusQuery = (status != null && status != 'All') ? status.toLowerCase() : '';
+    final projectQuery = (projectId != null && projectId != '-1') ? projectId : '';
+    final queryParams = '?page=$page&limit=$limit&q=$q&status=$statusQuery&project_id=$projectQuery';
     final response = await _apiService.get('/inventory$queryParams');
 
     if (response is List) {

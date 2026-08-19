@@ -17,18 +17,31 @@ class ProjectsPage extends StatefulWidget {
 
 class _ProjectsPageState extends State<ProjectsPage> {
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<InventoryProvider>().loadProjects();
+      context.read<InventoryProvider>().loadProjects(reset: true);
     });
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      final provider = context.read<InventoryProvider>();
+      if (!provider.isLoading && provider.hasMoreProjects) {
+        provider.loadProjects();
+      }
+    }
   }
 
   @override
   void dispose() {
+    _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -43,7 +56,6 @@ class _ProjectsPageState extends State<ProjectsPage> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
@@ -55,7 +67,8 @@ class _ProjectsPageState extends State<ProjectsPage> {
         ? allProjects
         : allProjects.where((p) {
             final q = _searchQuery.toLowerCase().trim();
-            return p.name.toLowerCase().contains(q) || p.location.toLowerCase().contains(q);
+            return p.name.toLowerCase().contains(q) ||
+                p.location.toLowerCase().contains(q);
           }).toList();
 
     return Scaffold(
@@ -80,14 +93,17 @@ class _ProjectsPageState extends State<ProjectsPage> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: AppColors.textPrimary),
+            icon: const Icon(
+              Icons.refresh_rounded,
+              color: AppColors.textPrimary,
+            ),
             onPressed: () => inventoryProvider.loadProjects(),
           ),
           const SizedBox(width: 8),
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: () => inventoryProvider.loadProjects(),
+        onRefresh: () => inventoryProvider.loadProjects(reset: true),
         child: Column(
           children: [
             // Search & Action Header
@@ -108,7 +124,8 @@ class _ProjectsPageState extends State<ProjectsPage> {
                           ),
                           child: TextField(
                             controller: _searchController,
-                            onChanged: (val) => setState(() => _searchQuery = val),
+                            onChanged: (val) =>
+                                setState(() => _searchQuery = val),
                             style: GoogleFonts.poppins(fontSize: 14),
                             decoration: InputDecoration(
                               hintText: 'Search projects',
@@ -123,7 +140,10 @@ class _ProjectsPageState extends State<ProjectsPage> {
                               ),
                               suffixIcon: _searchQuery.isNotEmpty
                                   ? IconButton(
-                                      icon: const Icon(Icons.clear_rounded, size: 18),
+                                      icon: const Icon(
+                                        Icons.clear_rounded,
+                                        size: 18,
+                                      ),
                                       onPressed: () {
                                         _searchController.clear();
                                         setState(() => _searchQuery = '');
@@ -202,69 +222,79 @@ class _ProjectsPageState extends State<ProjectsPage> {
             // Projects List
             Expanded(
               child: inventoryProvider.isLoading && allProjects.isEmpty
-                  ? const Center(
-                      child: CircularProgressIndicator(),
-                    )
+                  ? const Center(child: CircularProgressIndicator())
                   : filteredProjects.isEmpty
-                      ? ListView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          children: [
-                            SizedBox(height: MediaQuery.of(context).size.height * 0.18),
-                            Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.search_off_rounded,
-                                    size: 56,
-                                    color: Colors.grey.shade400,
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    'No projects found',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.textPrimary,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'Pull down to refresh or add a new project',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 13,
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ),
-                                ],
+                  ? ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: [
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.18,
+                        ),
+                        Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.search_off_rounded,
+                                size: 56,
+                                color: Colors.grey.shade400,
                               ),
-                            ),
-                          ],
-                        )
-                      : ListView.builder(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20.0,
-                            vertical: 16.0,
+                              const SizedBox(height: 12),
+                              Text(
+                                'No projects found',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Pull down to refresh or add a new project',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 13,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
                           ),
-                          itemCount: filteredProjects.length,
-                          itemBuilder: (context, index) {
-                            final project = filteredProjects[index];
-                            return ProjectCard(
-                              project: project,
-                              showTotalUnits: true,
-                              onTap: () {
-                                inventoryProvider.setSelectedProject(project.id);
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => InventoryListPage(project: project),
-                                  ),
-                                );
-                              },
+                        ),
+                      ],
+                    )
+                  : ListView.builder(
+                      controller: _scrollController,
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20.0,
+                        vertical: 16.0,
+                      ),
+                      itemCount:
+                          filteredProjects.length +
+                          (inventoryProvider.hasMoreProjects ? 1 : 0),
+                      itemBuilder: (context, index) {
+                        if (index == filteredProjects.length) {
+                          return const Padding(
+                            padding: EdgeInsets.all(16.0),
+                            child: Center(child: CircularProgressIndicator()),
+                          );
+                        }
+                        final project = filteredProjects[index];
+                        return ProjectCard(
+                          project: project,
+                          showTotalUnits: true,
+                          onTap: () {
+                            inventoryProvider.setSelectedProject(project.id);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    InventoryListPage(project: project),
+                              ),
                             );
                           },
-                        ),
+                        );
+                      },
+                    ),
             ),
           ],
         ),

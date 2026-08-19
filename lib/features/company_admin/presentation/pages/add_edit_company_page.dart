@@ -24,10 +24,12 @@ class _AddEditCompanyPageState extends State<AddEditCompanyPage> {
   late TextEditingController _phoneController;
   late TextEditingController _cityController;
   late TextEditingController _addressController;
+  late TextEditingController _projectFilterController;
 
   late String _status;
   late Set<String> _selectedPermissions;
   late Set<int> _selectedProjectIds;
+  String _projectSearchText = '';
 
   bool get isEditing => widget.company != null;
 
@@ -41,6 +43,7 @@ class _AddEditCompanyPageState extends State<AddEditCompanyPage> {
     _phoneController = TextEditingController(text: company?.phone ?? '');
     _cityController = TextEditingController(text: company?.city ?? 'Chennai');
     _addressController = TextEditingController(text: company?.address ?? '');
+    _projectFilterController = TextEditingController();
 
     _status = company?.status ?? 'active';
     _selectedPermissions = Set<String>.from(
@@ -52,7 +55,7 @@ class _AddEditCompanyPageState extends State<AddEditCompanyPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final invProvider = context.read<InventoryProvider>();
       if (invProvider.projects.isEmpty) {
-        invProvider.loadProjects();
+        invProvider.loadProjects(reset: true);
       }
     });
   }
@@ -64,6 +67,7 @@ class _AddEditCompanyPageState extends State<AddEditCompanyPage> {
     _phoneController.dispose();
     _cityController.dispose();
     _addressController.dispose();
+    _projectFilterController.dispose();
     super.dispose();
   }
 
@@ -400,6 +404,109 @@ class _AddEditCompanyPageState extends State<AddEditCompanyPage> {
                       subtitle: 'Allocate projects whose inventory this company can access',
                       icon: Icons.apartment_rounded,
                       children: [
+                        // Search & Quick Select bar
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: AppColors.background,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: AppColors.borderLight),
+                                ),
+                                child: TextField(
+                                  controller: _projectFilterController,
+                                  onChanged: (val) {
+                                    setState(() {
+                                      _projectSearchText = val.toLowerCase().trim();
+                                    });
+                                  },
+                                  style: GoogleFonts.poppins(fontSize: 12.5),
+                                  decoration: InputDecoration(
+                                    hintText: 'Filter projects...',
+                                    hintStyle: GoogleFonts.poppins(
+                                      color: AppColors.textMuted,
+                                      fontSize: 12,
+                                    ),
+                                    prefixIcon: const Icon(
+                                      Icons.search_rounded,
+                                      size: 18,
+                                      color: AppColors.textMuted,
+                                    ),
+                                    suffixIcon: _projectFilterController.text.isNotEmpty
+                                        ? IconButton(
+                                            icon: const Icon(Icons.clear_rounded, size: 16),
+                                            onPressed: () {
+                                              _projectFilterController.clear();
+                                              setState(() => _projectSearchText = '');
+                                            },
+                                          )
+                                        : null,
+                                    border: InputBorder.none,
+                                    isDense: true,
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 10,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            TextButton(
+                              onPressed: () {
+                                setState(() {
+                                  if (_selectedProjectIds.length == invProvider.projects.length) {
+                                    _selectedProjectIds.clear();
+                                  } else {
+                                    _selectedProjectIds = invProvider.projects.map((p) => p.id).toSet();
+                                  }
+                                });
+                              },
+                              style: TextButton.styleFrom(
+                                visualDensity: VisualDensity.compact,
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              ),
+                              child: Text(
+                                _selectedProjectIds.length == invProvider.projects.length
+                                    ? 'Clear All'
+                                    : 'Select All',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+
+                        // Selected count indicator
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: AppColors.primarySurface,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.check_circle_outline_rounded, size: 14, color: AppColors.primary),
+                              const SizedBox(width: 6),
+                              Text(
+                                '${_selectedProjectIds.length} of ${invProvider.projects.length} projects assigned',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.primaryDark,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+
                         if (invProvider.projects.isEmpty)
                           const Center(
                             child: Padding(
@@ -408,7 +515,13 @@ class _AddEditCompanyPageState extends State<AddEditCompanyPage> {
                             ),
                           )
                         else
-                          ...invProvider.projects.map((proj) {
+                          ...invProvider.projects
+                              .where((p) =>
+                                  _projectSearchText.isEmpty ||
+                                  p.name.toLowerCase().contains(_projectSearchText) ||
+                                  p.city.toLowerCase().contains(_projectSearchText) ||
+                                  p.location.toLowerCase().contains(_projectSearchText))
+                              .map((proj) {
                             final isAssigned = _selectedProjectIds.contains(proj.id);
                             return Container(
                               margin: const EdgeInsets.only(bottom: 10),

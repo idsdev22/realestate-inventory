@@ -32,8 +32,10 @@ class _LoginPageState extends State<LoginPage> {
       _selectedRole = role;
       if (role == UserRole.admin) {
         _emailController.text = 'admin@syncr.test';
-      } else {
+      } else if (role == UserRole.marketingTeam) {
         _emailController.text = 'abcmarketing@gmail.com';
+      } else {
+        _emailController.text = 'staff@syncr.test';
       }
     });
   }
@@ -231,7 +233,7 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                               child: Center(
                                 child: Text(
-                                  'Marketing Team',
+                                  'Marketing',
                                   style: GoogleFonts.poppins(
                                     fontSize: 13,
                                     fontWeight:
@@ -240,6 +242,48 @@ class _LoginPageState extends State<LoginPage> {
                                         : FontWeight.normal,
                                     color:
                                         _selectedRole == UserRole.marketingTeam
+                                        ? AppColors.primary
+                                        : AppColors.textSecondary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => _onRoleChanged(UserRole.staffs),
+                            borderRadius: BorderRadius.circular(9),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              decoration: BoxDecoration(
+                                color: _selectedRole == UserRole.staffs
+                                    ? Colors.white
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(9),
+                                boxShadow:
+                                    _selectedRole == UserRole.staffs
+                                    ? [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(
+                                            alpha: 0.05,
+                                          ),
+                                          blurRadius: 4,
+                                        ),
+                                      ]
+                                    : null,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  'Staffs',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 13,
+                                    fontWeight:
+                                        _selectedRole == UserRole.staffs
+                                        ? FontWeight.w600
+                                        : FontWeight.normal,
+                                    color:
+                                        _selectedRole == UserRole.staffs
                                         ? AppColors.primary
                                         : AppColors.textSecondary,
                                   ),

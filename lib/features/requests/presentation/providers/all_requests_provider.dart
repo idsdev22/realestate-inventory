@@ -3,30 +3,26 @@ import '../../data/models/block_request_model.dart';
 import '../../data/services/request_service.dart';
 import '../../../../core/network/api_exception.dart';
 
-class RequestsProvider extends ChangeNotifier {
+class AllRequestsProvider extends ChangeNotifier {
   final RequestService _requestService;
 
   List<BlockRequestModel> _requests = [];
-  String _selectedTab = 'All';
   bool _isLoading = false;
   String? _errorMessage;
   int _currentPage = 1;
   bool _hasMore = true;
+  String _selectedTab = 'All';
 
-  RequestsProvider({required RequestService requestService}) 
+  AllRequestsProvider({required RequestService requestService}) 
       : _requestService = requestService;
 
   List<BlockRequestModel> get requests => _requests;
-  String get selectedTab => _selectedTab;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   bool get hasMore => _hasMore;
+  String get selectedTab => _selectedTab;
 
-  List<BlockRequestModel> get filteredRequests {
-    if (_selectedTab == 'All') return _requests;
-    return _requests.where((r) => r.status.toLowerCase() == _selectedTab.toLowerCase()).toList();
-  }
-
+  // Counts based on current loaded list. This might not reflect total count on server.
   int get countAll => _requests.length;
   int get countPending => _requests.where((r) => r.status.toLowerCase() == 'pending').length;
   int get countApproved => _requests.where((r) => r.status.toLowerCase() == 'approved').length;
@@ -35,12 +31,7 @@ class RequestsProvider extends ChangeNotifier {
   void setSelectedTab(String tab) {
     if (_selectedTab != tab) {
       _selectedTab = tab;
-      notifyListeners();
-      // Since filtering is client-side for these tabs according to the old logic:
-      // If we want server-side filtering we would fetch here, but I will keep it client-side
-      // or fetch it if needed. Let's just fetch all and filter locally for now to preserve old behavior,
-      // or we can just fetch according to the tab.
-      // Let's stick to the previous behavior where `filteredRequests` does client-side filtering on all loaded items.
+      fetchRequests(refresh: true);
     }
   }
 
@@ -58,10 +49,11 @@ class RequestsProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      final statusParam = _selectedTab == 'All' ? '' : _selectedTab.toLowerCase();
       final newRequests = await _requestService.getRequests(
-        status: '', // Fetch all for "My Requests" and filter locally
+        status: statusParam,
         page: _currentPage,
-        limit: 20, // slightly higher limit to ensure enough for local filtering
+        limit: 1000,
       );
 
       if (newRequests.isEmpty) {
@@ -69,8 +61,8 @@ class RequestsProvider extends ChangeNotifier {
       } else {
         _requests.addAll(newRequests);
         _currentPage++;
-        if (newRequests.length < 10) {
-          _hasMore = false;
+        if (newRequests.length < 1000) {
+          _hasMore = false; // Assuming limit is 1000
         }
       }
       _errorMessage = null;
@@ -78,74 +70,6 @@ class RequestsProvider extends ChangeNotifier {
       _errorMessage = e.message;
     } catch (e) {
       _errorMessage = 'Failed to load requests.';
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  Future<bool> createRequest(Map<String, dynamic> data) async {
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
-    try {
-      final newRequest = await _requestService.createRequest(data);
-      _requests.insert(0, newRequest);
-      return true;
-    } on ApiException catch (e) {
-      _errorMessage = e.message;
-      return false;
-    } catch (e) {
-      _errorMessage = 'Failed to create request';
-      return false;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  void addRequest(BlockRequestModel request) {
-    _requests.insert(0, request);
-    notifyListeners();
-  }
-
-  Future<bool> updateRequest(String id, Map<String, dynamic> data) async {
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
-    try {
-      final updatedRequest = await _requestService.updateRequest(id, data);
-      final index = _requests.indexWhere((r) => r.id == id);
-      if (index != -1) {
-        _requests[index] = updatedRequest;
-      }
-      return true;
-    } on ApiException catch (e) {
-      _errorMessage = e.message;
-      return false;
-    } catch (e) {
-      _errorMessage = 'Failed to update request';
-      return false;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  Future<bool> deleteRequest(String id) async {
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
-    try {
-      await _requestService.deleteRequest(id);
-      _requests.removeWhere((r) => r.id == id);
-      return true;
-    } on ApiException catch (e) {
-      _errorMessage = e.message;
-      return false;
-    } catch (e) {
-      _errorMessage = 'Failed to delete request';
-      return false;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -172,6 +96,26 @@ class RequestsProvider extends ChangeNotifier {
       return false;
     } catch (e) {
       _errorMessage = 'Failed to review request';
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> deleteRequest(String id) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      await _requestService.deleteRequest(id);
+      _requests.removeWhere((r) => r.id == id);
+      return true;
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
+      return false;
+    } catch (e) {
+      _errorMessage = 'Failed to delete request';
       return false;
     } finally {
       _isLoading = false;

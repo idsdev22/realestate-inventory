@@ -64,4 +64,40 @@ class BlockRequestModel {
       requestedDate: requestedDate ?? this.requestedDate,
     );
   }
+
+  factory BlockRequestModel.fromJson(Map<String, dynamic> json) {
+    // If the API returns nested unit/plot data
+    final unitData = json['unit'] ?? json['plot'] ?? <String, dynamic>{};
+    
+    // Helper to extract first non-null value from multiple keys
+    String? getValue(List<String> keys, [Map<String, dynamic>? source]) {
+      final src = source ?? json;
+      for (var key in keys) {
+        if (src[key] != null) return src[key].toString();
+      }
+      return null;
+    }
+
+    return BlockRequestModel(
+      id: json['id']?.toString() ?? '',
+      unitNo: getValue(['unit_no', 'plot_no'], json) ?? getValue(['unit_no', 'plot_no'], unitData) ?? 'N/A',
+      projectName: getValue(['project_name'], json) ?? getValue(['project_name'], unitData) ?? 'Unknown Project',
+      areaSqFt: int.tryParse(getValue(['area_sq_ft', 'area'], json) ?? getValue(['area_sq_ft', 'area'], unitData) ?? '0') ?? 0,
+      facing: getValue(['facing'], json) ?? getValue(['facing'], unitData) ?? 'N/A',
+      roadWidth: getValue(['road_width'], json) ?? getValue(['road_width'], unitData) ?? 'N/A',
+      formattedPrice: getValue(['formatted_price', 'price'], json) ?? getValue(['formatted_price', 'price'], unitData) ?? '0',
+      customerName: json['customer_name']?.toString() ?? 'Unknown Customer',
+      customerPhone: json['customer_phone']?.toString() ?? 'N/A',
+      customerEmail: json['customer_email']?.toString(),
+      expectedBookingDate: json['expected_booking_date']?.toString() ?? 'N/A',
+      remarks: json['remarks']?.toString(),
+      status: _capitalize(json['status']?.toString() ?? 'Pending'),
+      requestedDate: json['created_at']?.toString() ?? json['requested_date']?.toString() ?? 'N/A',
+    );
+  }
+
+  static String _capitalize(String text) {
+    if (text.isEmpty) return text;
+    return text[0].toUpperCase() + text.substring(1).toLowerCase();
+  }
 }

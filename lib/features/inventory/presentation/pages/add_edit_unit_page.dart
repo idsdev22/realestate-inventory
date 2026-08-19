@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../activity/data/models/activity_log_model.dart';
 import '../../../projects/data/models/project_model.dart';
 import '../../../teams/presentation/providers/teams_provider.dart';
 import 'package:realestate_inventory/features/inventory/data/models/unit_model.dart';
@@ -12,11 +11,7 @@ class AddEditUnitPage extends StatefulWidget {
   final UnitModel? unitToEdit;
   final ProjectModel? project;
 
-  const AddEditUnitPage({
-    super.key,
-    this.unitToEdit,
-    this.project,
-  });
+  const AddEditUnitPage({super.key, this.unitToEdit, this.project});
 
   @override
   State<AddEditUnitPage> createState() => _AddEditUnitPageState();
@@ -57,12 +52,7 @@ class _AddEditUnitPageState extends State<AddEditUnitPage> {
     'South-West',
   ];
 
-  final List<String> _roadWidths = [
-    '30 ft',
-    '40 ft',
-    '60 ft',
-    '80 ft',
-  ];
+  final List<String> _roadWidths = ['30 ft', '40 ft', '60 ft', '80 ft'];
 
   final List<String> _statuses = [
     'Available',
@@ -71,32 +61,37 @@ class _AddEditUnitPageState extends State<AddEditUnitPage> {
     'Registered',
   ];
 
-  final List<String> _blocks = [
-    'A Block',
-    'B Block',
-    'C Block',
-    'D Block',
-  ];
+  final List<String> _blocks = ['A Block', 'B Block', 'C Block', 'D Block'];
 
   @override
   void initState() {
     super.initState();
     final edit = widget.unitToEdit;
 
-    _selectedProject = edit?.projectName ?? widget.project?.name ?? 'Royal City';
+    _selectedProject =
+        edit?.projectName ?? widget.project?.name ?? 'Royal City';
     _selectedBlock = edit?.blockPhase ?? 'A Block';
     _selectedPlotType = edit?.plotType ?? 'Residential Plot';
     _selectedFacing = edit?.facing?.replaceAll(' Facing', '') ?? 'East';
     if (!_facings.contains(_selectedFacing)) _selectedFacing = 'East';
     _selectedRoadWidth = edit?.roadWidthFt?.toString() ?? '30';
-    if (!_roadWidths.contains('$_selectedRoadWidth ft')) _selectedRoadWidth = '30';
+    if (!_roadWidths.contains('$_selectedRoadWidth ft'))
+      _selectedRoadWidth = '30';
     _selectedStatus = edit?.status ?? 'Available';
 
     _unitNoController = TextEditingController(text: edit?.unitNo ?? 'A-125');
-    _plotAreaController = TextEditingController(text: edit != null ? '${edit.areaSqFt}' : '1500');
-    _dimensionsController = TextEditingController(text: edit?.dimensions ?? '30 x 50');
-    _priceController = TextEditingController(text: edit != null ? '${edit.price.toInt()}' : '4500000');
-    _pricePerSqFtController = TextEditingController(text: edit != null ? '${edit.pricePerSqFt.toInt()}' : '3000');
+    _plotAreaController = TextEditingController(
+      text: edit != null ? '${edit.areaSqFt}' : '1500',
+    );
+    _dimensionsController = TextEditingController(
+      text: edit?.dimensions ?? '30 x 50',
+    );
+    _priceController = TextEditingController(
+      text: edit != null ? '${edit.price.toInt()}' : '4500000',
+    );
+    _pricePerSqFtController = TextEditingController(
+      text: edit != null ? '${edit.pricePerSqFt.toInt()}' : '3000',
+    );
     _remarksController = TextEditingController(text: edit?.remarks ?? '');
 
     _priceController.addListener(_calculatePricePerSqFt);
@@ -130,17 +125,22 @@ class _AddEditUnitPageState extends State<AddEditUnitPage> {
   void _saveUnit() {
     if (_formKey.currentState?.validate() ?? false) {
       final inventoryProvider = context.read<InventoryProvider>();
-      final teamsProvider = context.read<TeamsProvider>();
+      context.read<TeamsProvider>();
 
       final isEdit = widget.unitToEdit != null;
-      final targetProjectId = widget.project?.id ??
-          inventoryProvider.projects.firstWhere(
-            (p) => p.name == _selectedProject,
-            orElse: () => inventoryProvider.projects.first,
-          ).id;
+      final targetProjectId =
+          widget.project?.id ??
+          inventoryProvider.projects
+              .firstWhere(
+                (p) => p.name == _selectedProject,
+                orElse: () => inventoryProvider.projects.first,
+              )
+              .id;
 
       final unit = UnitModel(
-        id: isEdit ? widget.unitToEdit!.id : DateTime.now().millisecondsSinceEpoch % 1000000,
+        id: isEdit
+            ? widget.unitToEdit!.id
+            : DateTime.now().millisecondsSinceEpoch % 1000000,
         projectId: targetProjectId,
         projectName: _selectedProject,
         blockPhase: _selectedBlock,
@@ -148,38 +148,22 @@ class _AddEditUnitPageState extends State<AddEditUnitPage> {
         plotType: _selectedPlotType,
         areaSqFt: double.tryParse(_plotAreaController.text.trim()) ?? 1200.0,
         facing: '$_selectedFacing Facing',
-        roadWidthFt: double.tryParse(_selectedRoadWidth.replaceAll(' ft', '')) ?? 30,
+        roadWidthFt:
+            double.tryParse(_selectedRoadWidth.replaceAll(' ft', '')) ?? 30,
         dimensions: _dimensionsController.text.trim(),
         price: double.tryParse(_priceController.text.trim()) ?? 3600000,
-        pricePerSqFt: double.tryParse(_pricePerSqFtController.text.trim()) ?? 3000,
+        pricePerSqFt:
+            double.tryParse(_pricePerSqFtController.text.trim()) ?? 3000,
         status: _selectedStatus,
-        remarks: _remarksController.text.trim().isNotEmpty ? _remarksController.text.trim() : null,
+        remarks: _remarksController.text.trim().isNotEmpty
+            ? _remarksController.text.trim()
+            : null,
       );
 
       if (isEdit) {
         inventoryProvider.updateUnit(unit);
-        teamsProvider.addActivity(
-          ActivityLogModel(
-            id: 'act_${DateTime.now().millisecondsSinceEpoch}',
-            description: '${unit.unitNo} details updated by Admin',
-            actor: 'Admin',
-            time: 'Just now',
-            group: 'Today',
-            type: ActivityType.unitUpdated,
-          ),
-        );
       } else {
         inventoryProvider.addUnit(unit);
-        teamsProvider.addActivity(
-          ActivityLogModel(
-            id: 'act_${DateTime.now().millisecondsSinceEpoch}',
-            description: 'New unit ${unit.unitNo} added in ${unit.projectName} by Admin',
-            actor: 'Admin',
-            time: 'Just now',
-            group: 'Today',
-            type: ActivityType.unitAdded,
-          ),
-        );
       }
 
       Navigator.pop(context);
@@ -208,7 +192,10 @@ class _AddEditUnitPageState extends State<AddEditUnitPage> {
         elevation: 0,
         scrolledUnderElevation: 0.5,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+          icon: const Icon(
+            Icons.arrow_back_rounded,
+            color: AppColors.textPrimary,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -244,13 +231,21 @@ class _AddEditUnitPageState extends State<AddEditUnitPage> {
                     Expanded(
                       child: _buildDropdown(
                         label: 'Project*',
-                        value: inventoryProvider.projects.any((p) => p.name == _selectedProject) 
-                            ? _selectedProject 
-                            : (inventoryProvider.projects.isNotEmpty ? inventoryProvider.projects.first.name : _selectedProject),
-                        items: inventoryProvider.projects.isNotEmpty 
-                            ? inventoryProvider.projects.map((p) => p.name).toList() 
+                        value:
+                            inventoryProvider.projects.any(
+                              (p) => p.name == _selectedProject,
+                            )
+                            ? _selectedProject
+                            : (inventoryProvider.projects.isNotEmpty
+                                  ? inventoryProvider.projects.first.name
+                                  : _selectedProject),
+                        items: inventoryProvider.projects.isNotEmpty
+                            ? inventoryProvider.projects
+                                  .map((p) => p.name)
+                                  .toList()
                             : [_selectedProject],
-                        onChanged: (val) => setState(() => _selectedProject = val!),
+                        onChanged: (val) =>
+                            setState(() => _selectedProject = val!),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -259,7 +254,8 @@ class _AddEditUnitPageState extends State<AddEditUnitPage> {
                         label: 'Block / Phase*',
                         value: _selectedBlock,
                         items: _blocks,
-                        onChanged: (val) => setState(() => _selectedBlock = val!),
+                        onChanged: (val) =>
+                            setState(() => _selectedBlock = val!),
                       ),
                     ),
                   ],
@@ -274,7 +270,8 @@ class _AddEditUnitPageState extends State<AddEditUnitPage> {
                         label: 'Plot / Unit No.*',
                         controller: _unitNoController,
                         hintText: 'A-125',
-                        validator: (v) => v?.trim().isEmpty ?? true ? 'Enter Unit No' : null,
+                        validator: (v) =>
+                            v?.trim().isEmpty ?? true ? 'Enter Unit No' : null,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -283,7 +280,8 @@ class _AddEditUnitPageState extends State<AddEditUnitPage> {
                         label: 'Plot Type',
                         value: _selectedPlotType,
                         items: _plotTypes,
-                        onChanged: (val) => setState(() => _selectedPlotType = val!),
+                        onChanged: (val) =>
+                            setState(() => _selectedPlotType = val!),
                       ),
                     ),
                   ],
@@ -299,7 +297,8 @@ class _AddEditUnitPageState extends State<AddEditUnitPage> {
                         controller: _plotAreaController,
                         keyboardType: TextInputType.number,
                         hintText: '1500',
-                        validator: (v) => v?.trim().isEmpty ?? true ? 'Enter area' : null,
+                        validator: (v) =>
+                            v?.trim().isEmpty ?? true ? 'Enter area' : null,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -308,7 +307,8 @@ class _AddEditUnitPageState extends State<AddEditUnitPage> {
                         label: 'Facing*',
                         value: _selectedFacing,
                         items: _facings,
-                        onChanged: (val) => setState(() => _selectedFacing = val!),
+                        onChanged: (val) =>
+                            setState(() => _selectedFacing = val!),
                       ),
                     ),
                   ],
@@ -323,7 +323,8 @@ class _AddEditUnitPageState extends State<AddEditUnitPage> {
                         label: 'Road Width*',
                         value: _selectedRoadWidth,
                         items: _roadWidths,
-                        onChanged: (val) => setState(() => _selectedRoadWidth = val!),
+                        onChanged: (val) =>
+                            setState(() => _selectedRoadWidth = val!),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -347,7 +348,8 @@ class _AddEditUnitPageState extends State<AddEditUnitPage> {
                         controller: _priceController,
                         keyboardType: TextInputType.number,
                         hintText: '4500000',
-                        validator: (v) => v?.trim().isEmpty ?? true ? 'Enter price' : null,
+                        validator: (v) =>
+                            v?.trim().isEmpty ?? true ? 'Enter price' : null,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -487,10 +489,7 @@ class _AddEditUnitPageState extends State<AddEditUnitPage> {
                 color: AppColors.textPrimary,
               ),
               items: items.map((val) {
-                return DropdownMenuItem<String>(
-                  value: val,
-                  child: Text(val),
-                );
+                return DropdownMenuItem<String>(value: val, child: Text(val));
               }).toList(),
               onChanged: onChanged,
             ),
@@ -526,7 +525,10 @@ class _AddEditUnitPageState extends State<AddEditUnitPage> {
           style: GoogleFonts.poppins(fontSize: 14),
           decoration: InputDecoration(
             hintText: hintText,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
           ),
         ),
       ],

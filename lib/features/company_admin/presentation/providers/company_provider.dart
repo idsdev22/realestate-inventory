@@ -9,20 +9,28 @@ class CompanyProvider extends ChangeNotifier {
   List<CompanyModel> _companies = [];
   CompanyModel? _selectedCompany;
   bool _isLoading = false;
+  bool _isLoadingMore = false;
   bool _isSubmitting = false;
   String? _errorMessage;
   String _searchQuery = '';
   String _statusFilter = 'all'; // 'all', 'active', 'inactive'
+
+  int _currentPage = 1;
+  int _limit = 100;
+  bool _hasMore = false;
 
   CompanyProvider(this._companyService);
 
   List<CompanyModel> get companies => _companies;
   CompanyModel? get selectedCompany => _selectedCompany;
   bool get isLoading => _isLoading;
+  bool get isLoadingMore => _isLoadingMore;
   bool get isSubmitting => _isSubmitting;
+  bool get hasMore => _hasMore;
   String? get errorMessage => _errorMessage;
   String get searchQuery => _searchQuery;
   String get statusFilter => _statusFilter;
+  int get currentPage => _currentPage;
 
   int get totalCompanies => _companies.length;
   int get activeCompaniesCount => _companies.where((c) => c.isActive).length;
@@ -59,15 +67,47 @@ class CompanyProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// GET /companies
-  Future<void> fetchCompanies() async {
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
+  /// Fetch marketing companies (GET /companies?page=1&limit=100&q=...)
+  Future<void> fetchCompanies({
+    bool reset = true,
+    String? query,
+    int limit = 100,
+  }) async {
+    if (reset) {
+      _currentPage = 1;
+      _isLoading = true;
+      _hasMore = false;
+      _errorMessage = null;
+      notifyListeners();
+    } else {
+      if (_isLoadingMore || !_hasMore) return;
+      _isLoadingMore = true;
+      notifyListeners();
+    }
+
+    _limit = limit;
+    final effectiveQuery = query ?? _searchQuery;
 
     try {
-      final list = await _companyService.getCompanies();
-      _companies = list;
+      final fetchedList = await _companyService.getCompanies(
+        page: _currentPage,
+        limit: _limit,
+        q: effectiveQuery,
+      );
+
+      if (reset) {
+        _companies = fetchedList;
+      } else {
+        // Append unique items
+        final existingIds = _companies.map((c) => c.id).toSet();
+        final newItems = fetchedList.where((c) => !existingIds.contains(c.id)).toList();
+        _companies.addAll(newItems);
+      }
+
+      _hasMore = fetchedList.length >= _limit;
+      if (_hasMore) {
+        _currentPage++;
+      }
     } on ApiException catch (e) {
       _errorMessage = e.message;
     } catch (e) {
@@ -75,6 +115,7 @@ class CompanyProvider extends ChangeNotifier {
       debugPrint('Error fetching companies: $e');
     } finally {
       _isLoading = false;
+      _isLoadingMore = false;
       notifyListeners();
     }
   }

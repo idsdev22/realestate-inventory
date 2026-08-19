@@ -21,6 +21,12 @@ class _ActivityLogPageState extends State<ActivityLogPage> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    Future.microtask(() => context.read<TeamsProvider>().fetchActivities());
+  }
+
+  @override
   Widget build(BuildContext context) {
     final teamsProvider = context.watch<TeamsProvider>();
     final activities = teamsProvider.filteredActivities;
@@ -38,7 +44,10 @@ class _ActivityLogPageState extends State<ActivityLogPage> {
         elevation: 0,
         scrolledUnderElevation: 0.5,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+          icon: const Icon(
+            Icons.arrow_back_rounded,
+            color: AppColors.textPrimary,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -52,60 +61,45 @@ class _ActivityLogPageState extends State<ActivityLogPage> {
       ),
       body: Column(
         children: [
-          // Filter Bar
+          // Search and Filter Bar
           Container(
             color: Colors.white,
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-            child: Row(
+            child: Column(
               children: [
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: AppColors.background,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.borderLight),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: teamsProvider.activityFilter,
-                        isExpanded: true,
-                        icon: const Icon(
-                          Icons.keyboard_arrow_down_rounded,
-                          color: AppColors.textSecondary,
-                        ),
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.textPrimary,
-                        ),
-                        items: _filters.map((f) {
-                          return DropdownMenuItem<String>(
-                            value: f,
-                            child: Text(f),
-                          );
-                        }).toList(),
-                        onChanged: (val) {
-                          if (val != null) {
-                            teamsProvider.setActivityFilter(val);
-                          }
-                        },
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
+                // Search Bar
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
                   decoration: BoxDecoration(
                     color: AppColors.background,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: AppColors.borderLight),
                   ),
-                  child: const Icon(
-                    Icons.calendar_today_outlined,
-                    color: AppColors.iconColor,
-                    size: 20,
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.search_rounded,
+                        color: AppColors.iconColor,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextField(
+                          onChanged: (val) => context
+                              .read<TeamsProvider>()
+                              .setActivitySearchQuery(val),
+                          style: GoogleFonts.poppins(fontSize: 14),
+                          decoration: InputDecoration(
+                            hintText: 'Search activities...',
+                            hintStyle: GoogleFonts.poppins(
+                              color: AppColors.textMuted,
+                              fontSize: 14,
+                            ),
+                            border: InputBorder.none,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -114,15 +108,24 @@ class _ActivityLogPageState extends State<ActivityLogPage> {
 
           // Timeline List
           Expanded(
-            child: grouped.isEmpty
+            child: teamsProvider.isLoadingActivities
+                ? const Center(
+                    child: CircularProgressIndicator(color: AppColors.primary),
+                  )
+                : grouped.isEmpty
                 ? Center(
                     child: Text(
                       'No activities found',
-                      style: GoogleFonts.poppins(color: AppColors.textSecondary),
+                      style: GoogleFonts.poppins(
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20.0,
+                      vertical: 16.0,
+                    ),
                     itemCount: grouped.keys.length,
                     itemBuilder: (context, groupIndex) {
                       final groupTitle = grouped.keys.elementAt(groupIndex);
@@ -132,7 +135,10 @@ class _ActivityLogPageState extends State<ActivityLogPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Padding(
-                            padding: const EdgeInsets.only(bottom: 12.0, top: 8.0),
+                            padding: const EdgeInsets.only(
+                              bottom: 12.0,
+                              top: 8.0,
+                            ),
                             child: Text(
                               groupTitle,
                               style: GoogleFonts.poppins(
@@ -180,11 +186,7 @@ class _ActivityLogPageState extends State<ActivityLogPage> {
               color: item.iconColor.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              item.iconData,
-              color: item.iconColor,
-              size: 20,
-            ),
+            child: Icon(item.iconData, color: item.iconColor, size: 20),
           ),
           const SizedBox(width: 12),
 
@@ -193,6 +195,43 @@ class _ActivityLogPageState extends State<ActivityLogPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Row(
+                  children: [
+                    Text(
+                      item.actor,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    if (item.entityType != null &&
+                        item.entityType!.isNotEmpty) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.background,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: AppColors.borderLight),
+                        ),
+                        child: Text(
+                          item.entityType!.toUpperCase(),
+                          style: GoogleFonts.poppins(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textSecondary,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 6),
                 Text(
                   item.description,
                   style: GoogleFonts.poppins(

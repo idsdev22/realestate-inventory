@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:realestate_inventory/features/activity/data/models/activity_log_model.dart';
+import 'package:realestate_inventory/features/activity/data/services/activity_service.dart';
 import 'package:realestate_inventory/features/teams/data/models/team_model.dart';
+import 'package:realestate_inventory/core/utils/app_logger.dart';
 
 class TeamsProvider extends ChangeNotifier {
+  final ActivityService? _activityService;
+
   List<MarketingTeamModel> _teams = [];
   List<UserMemberModel> _users = [];
   List<ActivityLogModel> _activities = [];
   String _teamSearchQuery = '';
+  String _activitySearchQuery = '';
   String _activityFilter = 'All Activities';
+  bool _isLoadingActivities = false;
 
-  TeamsProvider() {
+  TeamsProvider({ActivityService? activityService}) : _activityService = activityService {
     _initializeDefaultData();
   }
 
@@ -17,7 +23,9 @@ class TeamsProvider extends ChangeNotifier {
   List<UserMemberModel> get users => _users;
   List<ActivityLogModel> get activities => _activities;
   String get teamSearchQuery => _teamSearchQuery;
+  String get activitySearchQuery => _activitySearchQuery;
   String get activityFilter => _activityFilter;
+  bool get isLoadingActivities => _isLoadingActivities;
 
   List<MarketingTeamModel> get filteredTeams {
     if (_teamSearchQuery.trim().isEmpty) return _teams;
@@ -30,8 +38,19 @@ class TeamsProvider extends ChangeNotifier {
   }
 
   List<ActivityLogModel> get filteredActivities {
-    if (_activityFilter == 'All Activities') return _activities;
-    return _activities.where((a) {
+    List<ActivityLogModel> result = _activities;
+
+    if (_activitySearchQuery.trim().isNotEmpty) {
+      final q = _activitySearchQuery.toLowerCase().trim();
+      result = result.where((a) {
+        return a.description.toLowerCase().contains(q) ||
+            a.actor.toLowerCase().contains(q) ||
+            (a.entityType?.toLowerCase().contains(q) ?? false);
+      }).toList();
+    }
+
+    if (_activityFilter == 'All Activities') return result;
+    return result.where((a) {
       if (_activityFilter == 'Status Changes') {
         return a.type == ActivityType.statusBlocked || a.type == ActivityType.statusBooked;
       } else if (_activityFilter == 'Unit Updates') {
@@ -45,6 +64,11 @@ class TeamsProvider extends ChangeNotifier {
 
   void setTeamSearchQuery(String query) {
     _teamSearchQuery = query;
+    notifyListeners();
+  }
+
+  void setActivitySearchQuery(String query) {
+    _activitySearchQuery = query;
     notifyListeners();
   }
 
@@ -66,6 +90,23 @@ class TeamsProvider extends ChangeNotifier {
   void addActivity(ActivityLogModel activity) {
     _activities.insert(0, activity);
     notifyListeners();
+  }
+
+  Future<void> fetchActivities() async {
+    if (_activityService == null) return;
+    
+    _isLoadingActivities = true;
+    notifyListeners();
+
+    try {
+      _activities = await _activityService.getActivities();
+    } catch (e) {
+      AppLogger.e('Error fetching activities', e);
+      _activities = [];
+    } finally {
+      _isLoadingActivities = false;
+      notifyListeners();
+    }
   }
 
   void _initializeDefaultData() {
@@ -157,57 +198,6 @@ class TeamsProvider extends ChangeNotifier {
         email: 'vignesh@abc.com',
         avatarBgColor: const Color(0xFF4F46E5),
         initial: 'V',
-      ),
-    ];
-
-    _activities = [
-      ActivityLogModel(
-        id: 'act_1',
-        description: 'A-101 status changed from Available to Blocked by Admin',
-        actor: 'Admin',
-        time: '10:30 AM',
-        group: 'Today',
-        type: ActivityType.statusBlocked,
-      ),
-      ActivityLogModel(
-        id: 'act_2',
-        description: 'A-102 status changed from Blocked to Booked by Sales Manager',
-        actor: 'Sales Manager',
-        time: '11:15 AM',
-        group: 'Today',
-        type: ActivityType.statusBooked,
-      ),
-      ActivityLogModel(
-        id: 'act_3',
-        description: 'A-103 details updated by Admin',
-        actor: 'Admin',
-        time: '11:45 AM',
-        group: 'Today',
-        type: ActivityType.unitUpdated,
-      ),
-      ActivityLogModel(
-        id: 'act_4',
-        description: 'New unit A-150 added in Royal City by Admin',
-        actor: 'Admin',
-        time: '12:10 PM',
-        group: 'Today',
-        type: ActivityType.unitAdded,
-      ),
-      ActivityLogModel(
-        id: 'act_5',
-        description: 'Price updated for 5 units in Royal City by Admin',
-        actor: 'Admin',
-        time: '04:20 PM',
-        group: 'Yesterday',
-        type: ActivityType.priceUpdated,
-      ),
-      ActivityLogModel(
-        id: 'act_6',
-        description: 'New marketing team XYZ Realtors onboarded by Admin',
-        actor: 'Admin',
-        time: '02:00 PM',
-        group: 'Yesterday',
-        type: ActivityType.unitAdded,
       ),
     ];
   }

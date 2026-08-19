@@ -18,17 +18,32 @@ class CompaniesListPage extends StatefulWidget {
 
 class _CompaniesListPageState extends State<CompaniesListPage> {
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<CompanyProvider>().fetchCompanies();
+      context.read<CompanyProvider>().fetchCompanies(reset: true);
     });
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      final provider = context.read<CompanyProvider>();
+      if (!provider.isLoading &&
+          !provider.isLoadingMore &&
+          provider.hasMore) {
+        provider.fetchCompanies(reset: false);
+      }
+    }
   }
 
   @override
   void dispose() {
+    _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -42,7 +57,9 @@ class _CompaniesListPageState extends State<CompaniesListPage> {
     if (!auth.isAdmin) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Access Denied: Only Promoter Admins can delete marketing companies.'),
+          content: Text(
+            'Access Denied: Only Promoter Admins can delete marketing companies.',
+          ),
           backgroundColor: AppColors.rejected,
         ),
       );
@@ -55,26 +72,44 @@ class _CompaniesListPageState extends State<CompaniesListPage> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           'Delete Marketing Company?',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 17),
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.bold,
+            fontSize: 17,
+          ),
         ),
         content: Text(
-          'Are you sure you want to delete "${company.name}"? This action cannot be undone.',
-          style: GoogleFonts.poppins(fontSize: 13, color: AppColors.textSecondary),
+          'Are you sure you want to delete "${company.name}"? This action cannot be undone and will revoke access for all associated users.',
+          style: GoogleFonts.poppins(
+            fontSize: 13,
+            color: AppColors.textSecondary,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             child: Text(
               'Cancel',
-              style: GoogleFonts.poppins(color: AppColors.textSecondary, fontWeight: FontWeight.w600),
+              style: GoogleFonts.poppins(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.rejected, elevation: 0),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.rejected,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
             child: Text(
               'Delete',
-              style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600),
+              style: GoogleFonts.poppins(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
@@ -82,7 +117,9 @@ class _CompaniesListPageState extends State<CompaniesListPage> {
     );
 
     if (confirmed == true && mounted) {
-      final success = await context.read<CompanyProvider>().deleteCompany(company.id ?? 0);
+      final success = await context
+          .read<CompanyProvider>()
+          .deleteCompany(company.id ?? 0);
       if (mounted) {
         if (success) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -100,6 +137,16 @@ class _CompaniesListPageState extends State<CompaniesListPage> {
           );
         }
       }
+    }
+  }
+
+  void _navigateToAddCompany(BuildContext ctx) async {
+    final result = await Navigator.push<bool>(
+      ctx,
+      MaterialPageRoute(builder: (_) => const AddEditCompanyPage()),
+    );
+    if (result == true && mounted) {
+      context.read<CompanyProvider>().fetchCompanies(reset: true);
     }
   }
 
@@ -123,93 +170,150 @@ class _CompaniesListPageState extends State<CompaniesListPage> {
         title: Text(
           'Marketing Companies',
           style: GoogleFonts.poppins(
-            fontSize: 17,
+            fontSize: 18,
             fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
           ),
         ),
         actions: [
-          if (isPromoterAdmin)
-            Padding(
-              padding: const EdgeInsets.only(right: 8.0),
-              child: IconButton(
-                icon: const Icon(Icons.add_business_rounded, color: AppColors.primary),
-                tooltip: 'Add Marketing Company',
-                onPressed: () => _navigateToAddCompany(context),
-              ),
+          IconButton(
+            icon: const Icon(
+              Icons.refresh_rounded,
+              color: AppColors.textPrimary,
             ),
+            tooltip: 'Refresh',
+            onPressed: () =>
+                companyProvider.fetchCompanies(reset: true),
+          ),
+          if (isPromoterAdmin)
+            IconButton(
+              icon: const Icon(
+                Icons.add_business_rounded,
+                color: AppColors.primary,
+              ),
+              tooltip: 'Add Company',
+              onPressed: () => _navigateToAddCompany(context),
+            ),
+          const SizedBox(width: 8),
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: () => companyProvider.fetchCompanies(),
+        onRefresh: () => companyProvider.fetchCompanies(reset: true),
         child: Column(
           children: [
-            // Top Search and Stats Section
+            // Top Search and Actions Header
             Container(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
               color: Colors.white,
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
               child: Column(
                 children: [
-                  // Role Badge Banner if Promoter Admin
-                  if (isPromoterAdmin)
-                    Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: AppColors.primarySurface,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: AppColors.primaryLight),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.verified_user_rounded, color: AppColors.primary, size: 18),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'Promoter Admin Mode: Full company management authorized.',
-                              style: GoogleFonts.poppins(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.primaryDark,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
                   // Search Bar
-                  TextField(
-                    controller: _searchController,
-                    onChanged: _onSearchChanged,
-                    style: GoogleFonts.poppins(fontSize: 13.5),
-                    decoration: InputDecoration(
-                      hintText: 'Search by company name, city, email...',
-                      prefixIcon: const Icon(Icons.search_rounded, size: 20, color: AppColors.iconColor),
-                      suffixIcon: _searchController.text.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear_rounded, size: 18),
-                              onPressed: () {
-                                _searchController.clear();
-                                _onSearchChanged('');
-                              },
-                            )
-                          : null,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.background,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.borderLight),
+                    ),
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: _onSearchChanged,
+                      style: GoogleFonts.poppins(fontSize: 14),
+                      decoration: InputDecoration(
+                        hintText: 'Search companies by name, city, email...',
+                        hintStyle: GoogleFonts.poppins(
+                          color: AppColors.textMuted,
+                          fontSize: 13.5,
+                        ),
+                        prefixIcon: const Icon(
+                          Icons.search_rounded,
+                          color: AppColors.textMuted,
+                          size: 22,
+                        ),
+                        suffixIcon: _searchController.text.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(
+                                  Icons.clear_rounded,
+                                  size: 18,
+                                ),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  _onSearchChanged('');
+                                },
+                              )
+                            : null,
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
 
-                  // Filter Chips & Stats
+                  // Filter Chips
                   Row(
                     children: [
-                      _buildFilterChip('All', 'all', companyProvider.totalCompanies),
+                      _buildFilterChip(
+                        label: 'All',
+                        value: 'all',
+                        count: companyProvider.totalCompanies,
+                        isSelected: companyProvider.statusFilter == 'all',
+                        onTap: () => companyProvider.setStatusFilter('all'),
+                      ),
                       const SizedBox(width: 8),
-                      _buildFilterChip('Active', 'active', companyProvider.activeCompaniesCount),
+                      _buildFilterChip(
+                        label: 'Active',
+                        value: 'active',
+                        count: companyProvider.activeCompaniesCount,
+                        isSelected: companyProvider.statusFilter == 'active',
+                        onTap: () => companyProvider.setStatusFilter('active'),
+                      ),
                       const SizedBox(width: 8),
-                      _buildFilterChip('Inactive', 'inactive', companyProvider.inactiveCompaniesCount),
+                      _buildFilterChip(
+                        label: 'Inactive',
+                        value: 'inactive',
+                        count: companyProvider.inactiveCompaniesCount,
+                        isSelected: companyProvider.statusFilter == 'inactive',
+                        onTap: () => companyProvider.setStatusFilter('inactive'),
+                      ),
                     ],
                   ),
+
+                  // Added Option: Prominent Add Company Button
+                  if (isPromoterAdmin) ...[
+                    const SizedBox(height: 14),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () => _navigateToAddCompany(context),
+                        icon: const Icon(
+                          Icons.add_business_rounded,
+                          size: 19,
+                          color: Colors.white,
+                        ),
+                        label: Text(
+                          '+ Add Marketing Company',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -221,13 +325,30 @@ class _CompaniesListPageState extends State<CompaniesListPage> {
                   ? const Center(child: CircularProgressIndicator())
                   : filteredCompanies.isEmpty
                       ? _buildEmptyState(context, isPromoterAdmin)
-                      : ListView.separated(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: filteredCompanies.length,
-                          separatorBuilder: (context, index) => const SizedBox(height: 14),
+                      : ListView.builder(
+                          controller: _scrollController,
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20.0,
+                            vertical: 16.0,
+                          ),
+                          itemCount: filteredCompanies.length +
+                              (companyProvider.isLoadingMore ? 1 : 0),
                           itemBuilder: (context, index) {
+                            if (index == filteredCompanies.length) {
+                              return const Padding(
+                                padding: EdgeInsets.all(16.0),
+                                child: Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                              );
+                            }
                             final company = filteredCompanies[index];
-                            return _buildCompanyCard(context, company, isPromoterAdmin);
+                            return _buildCompanyCard(
+                              context,
+                              company,
+                              isPromoterAdmin,
+                            );
                           },
                         ),
             ),
@@ -253,24 +374,15 @@ class _CompaniesListPageState extends State<CompaniesListPage> {
     );
   }
 
-  void _navigateToAddCompany(BuildContext ctx) async {
-    final result = await Navigator.push<bool>(
-      ctx,
-      MaterialPageRoute(builder: (_) => const AddEditCompanyPage()),
-    );
-    if (result == true && mounted) {
-      if (context.mounted) {
-        context.read<CompanyProvider>().fetchCompanies();
-      }
-    }
-  }
-
-  Widget _buildFilterChip(String label, String value, int count) {
-    final companyProvider = context.watch<CompanyProvider>();
-    final isSelected = companyProvider.statusFilter == value;
-
+  Widget _buildFilterChip({
+    required String label,
+    required String value,
+    required int count,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
     return InkWell(
-      onTap: () => companyProvider.setStatusFilter(value),
+      onTap: onTap,
       borderRadius: BorderRadius.circular(20),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
@@ -332,15 +444,20 @@ class _CompaniesListPageState extends State<CompaniesListPage> {
             .toUpperCase()
         : 'MK';
 
+    final projectNames = company.projects != null && company.projects!.isNotEmpty
+        ? company.projects!.map((p) => p.name).toList()
+        : (company.projectNames ?? []);
+
     return Container(
+      margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.borderLight),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 8,
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
             offset: const Offset(0, 3),
           ),
         ],
@@ -363,17 +480,17 @@ class _CompaniesListPageState extends State<CompaniesListPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top Row: Avatar, Name, Status, Actions
+              // Top Row: Avatar, Name, City, Status, Options Menu
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    width: 46,
-                    height: 46,
+                    width: 48,
+                    height: 48,
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: company.isActive
-                            ? [AppColors.primaryDark, AppColors.primary]
+                            ? [const Color(0xFF635BFF), const Color(0xFF4A41D4)]
                             : [AppColors.textMuted, AppColors.border],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -410,22 +527,27 @@ class _CompaniesListPageState extends State<CompaniesListPage> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            const SizedBox(width: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: AppColors.primarySurface,
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                company.city,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.primary,
+                            if (company.city.isNotEmpty) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 7,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primarySurface,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  company.city,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.primary,
+                                  ),
                                 ),
                               ),
-                            ),
+                            ],
                           ],
                         ),
                         const SizedBox(height: 3),
@@ -453,19 +575,28 @@ class _CompaniesListPageState extends State<CompaniesListPage> {
                       ),
                       if (isPromoterAdmin)
                         PopupMenuButton<String>(
-                          icon: const Icon(Icons.more_vert_rounded, size: 18, color: AppColors.textMuted),
+                          icon: const Icon(
+                            Icons.more_vert_rounded,
+                            size: 18,
+                            color: AppColors.textMuted,
+                          ),
                           padding: EdgeInsets.zero,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                           onSelected: (val) async {
                             if (val == 'edit') {
                               final res = await Navigator.push<bool>(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => AddEditCompanyPage(company: company),
+                                  builder: (_) =>
+                                      AddEditCompanyPage(company: company),
                                 ),
                               );
                               if (res == true && context.mounted) {
-                                context.read<CompanyProvider>().fetchCompanies();
+                                context
+                                    .read<CompanyProvider>()
+                                    .fetchCompanies(reset: true);
                               }
                             } else if (val == 'delete') {
                               _deleteCompany(company);
@@ -476,9 +607,16 @@ class _CompaniesListPageState extends State<CompaniesListPage> {
                               value: 'edit',
                               child: Row(
                                 children: [
-                                  Icon(Icons.edit_outlined, size: 16, color: AppColors.primary),
+                                  Icon(
+                                    Icons.edit_outlined,
+                                    size: 16,
+                                    color: AppColors.primary,
+                                  ),
                                   SizedBox(width: 8),
-                                  Text('Edit Particulars', style: TextStyle(fontSize: 13)),
+                                  Text(
+                                    'Edit Particulars',
+                                    style: TextStyle(fontSize: 13),
+                                  ),
                                 ],
                               ),
                             ),
@@ -486,9 +624,19 @@ class _CompaniesListPageState extends State<CompaniesListPage> {
                               value: 'delete',
                               child: Row(
                                 children: [
-                                  Icon(Icons.delete_outline_rounded, size: 16, color: AppColors.rejected),
+                                  Icon(
+                                    Icons.delete_outline_rounded,
+                                    size: 16,
+                                    color: AppColors.rejected,
+                                  ),
                                   SizedBox(width: 8),
-                                  Text('Delete Agency', style: TextStyle(fontSize: 13, color: AppColors.rejected)),
+                                  Text(
+                                    'Delete Company',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: AppColors.rejected,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -505,34 +653,57 @@ class _CompaniesListPageState extends State<CompaniesListPage> {
               // Contact & Address Row
               Row(
                 children: [
-                  const Icon(Icons.phone_outlined, size: 14, color: AppColors.textMuted),
-                  const SizedBox(width: 4),
-                  Text(
-                    company.phone,
-                    style: GoogleFonts.poppins(fontSize: 11.5, color: AppColors.textSecondary),
-                  ),
-                  const SizedBox(width: 14),
-                  const Icon(Icons.pin_drop_outlined, size: 14, color: AppColors.textMuted),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      company.address,
-                      style: GoogleFonts.poppins(fontSize: 11.5, color: AppColors.textSecondary),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                  if (company.phone.isNotEmpty) ...[
+                    const Icon(
+                      Icons.phone_outlined,
+                      size: 14,
+                      color: AppColors.textMuted,
                     ),
-                  ),
+                    const SizedBox(width: 4),
+                    Text(
+                      company.phone,
+                      style: GoogleFonts.poppins(
+                        fontSize: 11.5,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                  ],
+                  if (company.address.isNotEmpty) ...[
+                    const Icon(
+                      Icons.pin_drop_outlined,
+                      size: 14,
+                      color: AppColors.textMuted,
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        company.address,
+                        style: GoogleFonts.poppins(
+                          fontSize: 11.5,
+                          color: AppColors.textSecondary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ],
               ),
               const SizedBox(height: 10),
 
-              // Assigned Projects & Permissions Pills
+              // Assigned Projects & Metrics Pills
               Wrap(
                 spacing: 6,
                 runSpacing: 6,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
+                  // Projects Count Badge
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.primaryLight,
                       borderRadius: BorderRadius.circular(6),
@@ -540,10 +711,14 @@ class _CompaniesListPageState extends State<CompaniesListPage> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.apartment_rounded, size: 12, color: AppColors.primary),
+                        const Icon(
+                          Icons.apartment_rounded,
+                          size: 12,
+                          color: AppColors.primary,
+                        ),
                         const SizedBox(width: 4),
                         Text(
-                          '${company.projectIds.length} Projects',
+                          '${company.projectCount ?? company.projectIds.length} Projects',
                           style: GoogleFonts.poppins(
                             fontSize: 10.5,
                             fontWeight: FontWeight.w600,
@@ -553,22 +728,52 @@ class _CompaniesListPageState extends State<CompaniesListPage> {
                       ],
                     ),
                   ),
-                  ...company.permissions.take(2).map((p) {
-                    final label = p == 'view_inventory'
-                        ? 'View Plots'
-                        : p == 'submit_block_requests'
-                            ? 'Block Requests'
-                            : p == 'manage_users'
-                                ? 'Manage Users'
-                                : p;
+
+                  // Users Count Badge
+                  if (company.userCount != null)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.borderLight,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.people_outline_rounded,
+                            size: 12,
+                            color: AppColors.textSecondary,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${company.userCount} Users',
+                            style: GoogleFonts.poppins(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  // Actual Project Name Tags (e.g. Royal City, Green Valley, etc.)
+                  ...projectNames.take(2).map((pName) {
                     return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.borderLight,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        label,
+                        pName,
                         style: GoogleFonts.poppins(
                           fontSize: 10.5,
                           fontWeight: FontWeight.w500,
@@ -577,15 +782,19 @@ class _CompaniesListPageState extends State<CompaniesListPage> {
                       ),
                     );
                   }),
-                  if (company.permissions.length > 2)
+
+                  if (projectNames.length > 2)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.borderLight,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        '+${company.permissions.length - 2} more',
+                        '+${projectNames.length - 2} more',
                         style: GoogleFonts.poppins(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
@@ -615,7 +824,11 @@ class _CompaniesListPageState extends State<CompaniesListPage> {
                 color: AppColors.primarySurface,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.business_outlined, color: AppColors.primary, size: 40),
+              child: const Icon(
+                Icons.business_outlined,
+                color: AppColors.primary,
+                size: 40,
+              ),
             ),
             const SizedBox(height: 16),
             Text(
@@ -639,8 +852,23 @@ class _CompaniesListPageState extends State<CompaniesListPage> {
               const SizedBox(height: 20),
               ElevatedButton.icon(
                 onPressed: () => _navigateToAddCompany(context),
-                icon: const Icon(Icons.add_business_rounded, size: 18),
+                icon: const Icon(
+                  Icons.add_business_rounded,
+                  size: 18,
+                  color: Colors.white,
+                ),
                 label: const Text('Add Marketing Company'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
             ],
           ],
