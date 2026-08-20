@@ -11,6 +11,7 @@ import 'add_edit_unit_page.dart';
 import 'bulk_actions_page.dart';
 import 'unit_details_page.dart';
 import '../widgets/inventory_filter_sheet.dart';
+import '../widgets/upload_unit_image_sheet.dart';
 
 class InventoryListPage extends StatefulWidget {
   final ProjectModel? project;
@@ -70,6 +71,10 @@ class _InventoryListPageState extends State<InventoryListPage> {
       backgroundColor: Colors.transparent,
       builder: (context) => const InventoryFilterSheet(),
     );
+  }
+
+  void _showUploadUnitImageSheet(BuildContext context) {
+    UploadUnitImageSheet.show(context);
   }
 
   @override
@@ -132,6 +137,14 @@ class _InventoryListPageState extends State<InventoryListPage> {
                 ),
               )
             else ...[
+              IconButton(
+                tooltip: 'Upload Unit Image',
+                icon: const Icon(
+                  Icons.cloud_upload_outlined,
+                  color: AppColors.textPrimary,
+                ),
+                onPressed: () => _showUploadUnitImageSheet(context),
+              ),
               if (selectedProject != null)
                 IconButton(
                   tooltip: 'Edit Project',

@@ -225,19 +225,6 @@ class MorePage extends StatelessWidget {
                 title: 'Agency Management',
                 items: [
                   _buildMenuItem(
-                    icon: Icons.pie_chart_outline_rounded,
-                    title: 'Inventory Overview',
-                    subtitle: 'Status breakdown & analytics',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const InventoryOverviewPage(),
-                        ),
-                      );
-                    },
-                  ),
-                  _buildMenuItem(
                     icon: Icons.assignment_outlined,
                     title: 'My Requests',
                     subtitle: 'Track block and booking approvals',
@@ -246,19 +233,6 @@ class MorePage extends StatelessWidget {
                         context,
                         MaterialPageRoute(
                           builder: (_) => const MyRequestsPage(),
-                        ),
-                      );
-                    },
-                  ),
-                  _buildMenuItem(
-                    icon: Icons.history_rounded,
-                    title: 'Activity Log',
-                    subtitle: 'Recent agency activity logs',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const ActivityLogPage(),
                         ),
                       );
                     },

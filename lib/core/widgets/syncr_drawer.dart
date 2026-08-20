@@ -322,20 +322,6 @@ class SyncrDrawer extends StatelessWidget {
                   ] else if (isMarketingAdmin) ...[
                     _buildNavItem(
                       context,
-                      icon: Icons.pie_chart_outline_rounded,
-                      title: 'Inventory Overview',
-                      onTap: () {
-                        Navigator.pop(context);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const InventoryOverviewPage(),
-                          ),
-                        );
-                      },
-                    ),
-                    _buildNavItem(
-                      context,
                       icon: Icons.assignment_outlined,
                       title: 'My Requests',
                       onTap: () {
@@ -344,20 +330,6 @@ class SyncrDrawer extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (_) => const MyRequestsPage(),
-                          ),
-                        );
-                      },
-                    ),
-                    _buildNavItem(
-                      context,
-                      icon: Icons.history_rounded,
-                      title: 'Activity Log',
-                      onTap: () {
-                        Navigator.pop(context);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const ActivityLogPage(),
                           ),
                         );
                       },

@@ -10,7 +10,7 @@ class InventoryProvider extends ChangeNotifier {
   int? _selectedProjectId;
   String _selectedStatusFilter = 'All';
   String _searchQuery = '';
-  
+
   // Advanced filters
   List<String> _selectedPlotTypes = [];
   List<String> _selectedFacings = [];
@@ -29,8 +29,8 @@ class InventoryProvider extends ChangeNotifier {
   InventoryProvider({
     ProjectService? projectService,
     InventoryService? inventoryService,
-  })  : _projectService = projectService,
-        _inventoryService = inventoryService {
+  }) : _projectService = projectService,
+       _inventoryService = inventoryService {
     if (_projectService != null) {
       loadProjects();
     }
@@ -41,13 +41,13 @@ class InventoryProvider extends ChangeNotifier {
 
   Future<void> loadInventory({bool reset = false}) async {
     if (_inventoryService == null) return;
-    
+
     if (reset) {
       _currentPage = 1;
       _hasMore = true;
       _units.clear();
     }
-    
+
     if (!_hasMore || _isLoading) return;
 
     _isLoading = true;
@@ -60,11 +60,11 @@ class InventoryProvider extends ChangeNotifier {
         status: _selectedStatusFilter,
         projectId: _selectedProjectId?.toString(),
       );
-      
+
       if (fetchedUnits.length < 1000) {
         _hasMore = false;
       }
-      
+
       _units.addAll(fetchedUnits);
       _currentPage++;
     } catch (e) {
@@ -77,15 +77,15 @@ class InventoryProvider extends ChangeNotifier {
 
   Future<void> loadProjects({bool reset = false}) async {
     if (_projectService == null) return;
-    
+
     if (reset) {
       _currentProjectPage = 1;
       _hasMoreProjects = true;
       _projects.clear();
     }
-    
+
     if (!_hasMoreProjects || _isLoading) return;
-    
+
     _isLoading = true;
     notifyListeners();
     try {
@@ -93,11 +93,11 @@ class InventoryProvider extends ChangeNotifier {
         page: _currentProjectPage,
         limit: 1000,
       );
-      
+
       if (fetchedProjects.length < 1000) {
         _hasMoreProjects = false;
       }
-      
+
       _projects.addAll(fetchedProjects);
       _currentProjectPage++;
     } catch (e) {
@@ -113,7 +113,7 @@ class InventoryProvider extends ChangeNotifier {
   int? get selectedProjectId => _selectedProjectId;
   String get selectedStatusFilter => _selectedStatusFilter;
   String get searchQuery => _searchQuery;
-  
+
   List<String> get selectedPlotTypes => _selectedPlotTypes;
   List<String> get selectedFacings => _selectedFacings;
   double? get minPrice => _minPrice;
@@ -178,7 +178,7 @@ class InventoryProvider extends ChangeNotifier {
       if (_minPrice != null && unit.price < _minPrice!) {
         return false;
       }
-      
+
       if (_maxPrice != null && unit.price > _maxPrice!) {
         return false;
       }
@@ -222,7 +222,7 @@ class InventoryProvider extends ChangeNotifier {
   void setStatusFilter(String status) {
     _selectedStatusFilter = status;
     notifyListeners();
-    // Don't call loadInventory(reset: true) if we filter locally, 
+    // Don't call loadInventory(reset: true) if we filter locally,
     // but the backend API uses status filter so we keep it.
     loadInventory(reset: true);
   }
@@ -471,7 +471,9 @@ class InventoryProvider extends ChangeNotifier {
         if (success) {
           _projects.removeWhere((p) => p.id == id);
           if (_selectedProjectId == id) {
-            _selectedProjectId = _projects.isNotEmpty ? _projects.first.id : null;
+            _selectedProjectId = _projects.isNotEmpty
+                ? _projects.first.id
+                : null;
           }
           _isLoading = false;
           notifyListeners();
@@ -515,4 +517,32 @@ class InventoryProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> uploadUnitImage({
+    required int unitId,
+    required String filePath,
+    int sortOrder = 0,
+    List<int>? fileBytes,
+    String? fileName,
+  }) async {
+    if (_inventoryService == null) return false;
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final success = await _inventoryService.uploadUnitImage(
+        unitId: unitId,
+        filePath: filePath,
+        sortOrder: sortOrder,
+        fileBytes: fileBytes,
+        fileName: fileName,
+      );
+      _isLoading = false;
+      notifyListeners();
+      return success;
+    } catch (e) {
+      debugPrint('Error uploading unit image: $e');
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
 }

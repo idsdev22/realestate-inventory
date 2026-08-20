@@ -8,6 +8,7 @@ import '../../../requests/presentation/pages/request_to_block_page.dart';
 import 'package:realestate_inventory/features/inventory/data/models/unit_model.dart';
 import '../providers/inventory_provider.dart';
 import 'add_edit_unit_page.dart';
+import '../widgets/upload_unit_image_sheet.dart';
 
 class UnitDetailsPage extends StatelessWidget {
   final UnitModel unit;
@@ -47,7 +48,17 @@ class UnitDetailsPage extends StatelessWidget {
           ),
         ),
         actions: [
-          if (authProvider.isPromoterAdmin)
+          if (authProvider.isPromoterAdmin) ...[
+            IconButton(
+              tooltip: 'Upload Image',
+              icon: const Icon(
+                Icons.cloud_upload_outlined,
+                color: AppColors.textPrimary,
+              ),
+              onPressed: () {
+                UploadUnitImageSheet.show(context, preselectedUnit: liveUnit);
+              },
+            ),
             IconButton(
               icon: const Icon(
                 Icons.edit_outlined,
@@ -62,6 +73,7 @@ class UnitDetailsPage extends StatelessWidget {
                 );
               },
             ),
+          ],
           const SizedBox(width: 8),
         ],
       ),

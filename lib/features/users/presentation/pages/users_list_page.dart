@@ -61,7 +61,8 @@ class _UsersListPageState extends State<UsersListPage> {
       return;
     }
 
-    if (!auth.isPromoterAdmin && user.role?.toLowerCase() != 'marketing_team_user') {
+    if (!auth.isPromoterAdmin &&
+        user.role?.toLowerCase() != 'marketing_team_user') {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -157,8 +158,13 @@ class _UsersListPageState extends State<UsersListPage> {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+    final isPromoterAdmin = authProvider.isPromoterAdmin;
     final userProvider = context.watch<UserProvider>();
-    final users = userProvider.filteredUsers;
+    final users = userProvider.filteredUsers.where((u) {
+      if (isPromoterAdmin) return true;
+      return u.role?.toLowerCase() == 'marketing_team_user';
+    }).toList();
     final canPop = ModalRoute.of(context)?.canPop == true;
 
     return Scaffold(
@@ -301,48 +307,50 @@ class _UsersListPageState extends State<UsersListPage> {
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        _buildFilterChip(
-                          'All Roles',
-                          'all',
-                          userProvider.roleFilter,
-                          (val) {
-                            userProvider.setRoleFilter(val);
-                          },
-                        ),
-                        const SizedBox(width: 8),
-                        _buildFilterChip(
-                          'Promoter Admin',
-                          'promoter_admin',
-                          userProvider.roleFilter,
-                          (val) {
-                            userProvider.setRoleFilter(val);
-                          },
-                        ),
-                        const SizedBox(width: 8),
-                        _buildFilterChip(
-                          'Marketing Admin',
-                          'marketing_team_admin',
-                          userProvider.roleFilter,
-                          (val) {
-                            userProvider.setRoleFilter(val);
-                          },
-                        ),
-                        const SizedBox(width: 8),
-                        _buildFilterChip(
-                          'Sales User',
-                          'marketing_team_user',
-                          userProvider.roleFilter,
-                          (val) {
-                            userProvider.setRoleFilter(val);
-                          },
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          width: 1,
-                          height: 24,
-                          color: AppColors.borderLight,
-                          margin: const EdgeInsets.symmetric(horizontal: 4),
-                        ),
+                        if (isPromoterAdmin) ...[
+                          _buildFilterChip(
+                            'All Roles',
+                            'all',
+                            userProvider.roleFilter,
+                            (val) {
+                              userProvider.setRoleFilter(val);
+                            },
+                          ),
+                          const SizedBox(width: 8),
+                          _buildFilterChip(
+                            'Promoter Admin',
+                            'promoter_admin',
+                            userProvider.roleFilter,
+                            (val) {
+                              userProvider.setRoleFilter(val);
+                            },
+                          ),
+                          const SizedBox(width: 8),
+                          _buildFilterChip(
+                            'Marketing Admin',
+                            'marketing_team_admin',
+                            userProvider.roleFilter,
+                            (val) {
+                              userProvider.setRoleFilter(val);
+                            },
+                          ),
+                          const SizedBox(width: 8),
+                          _buildFilterChip(
+                            'Sales User',
+                            'marketing_team_user',
+                            userProvider.roleFilter,
+                            (val) {
+                              userProvider.setRoleFilter(val);
+                            },
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            width: 1,
+                            height: 24,
+                            color: AppColors.borderLight,
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                          ),
+                        ],
                         _buildFilterChip(
                           'All Status',
                           'all',
