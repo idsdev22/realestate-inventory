@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../projects/data/models/project_model.dart';
-import '../../../teams/presentation/providers/teams_provider.dart';
+
 import 'package:realestate_inventory/features/inventory/data/models/unit_model.dart';
 import '../providers/inventory_provider.dart';
 
@@ -139,7 +139,7 @@ class _AddEditUnitPageState extends State<AddEditUnitPage> {
 
     if (_formKey.currentState?.validate() ?? false) {
       final inventoryProvider = context.read<InventoryProvider>();
-      context.read<TeamsProvider>();
+
 
       final isEdit = widget.unitToEdit != null;
       final targetProjectId =

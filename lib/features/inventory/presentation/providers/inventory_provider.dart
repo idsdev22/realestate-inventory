@@ -10,6 +10,13 @@ class InventoryProvider extends ChangeNotifier {
   int? _selectedProjectId;
   String _selectedStatusFilter = 'All';
   String _searchQuery = '';
+  
+  // Advanced filters
+  List<String> _selectedPlotTypes = [];
+  List<String> _selectedFacings = [];
+  double? _minPrice;
+  double? _maxPrice;
+
   final Set<int> _selectedUnitIds = {};
   bool _isLoading = false;
   int _currentPage = 1;
@@ -106,6 +113,12 @@ class InventoryProvider extends ChangeNotifier {
   int? get selectedProjectId => _selectedProjectId;
   String get selectedStatusFilter => _selectedStatusFilter;
   String get searchQuery => _searchQuery;
+  
+  List<String> get selectedPlotTypes => _selectedPlotTypes;
+  List<String> get selectedFacings => _selectedFacings;
+  double? get minPrice => _minPrice;
+  double? get maxPrice => _maxPrice;
+
   Set<int> get selectedUnitIds => _selectedUnitIds;
   bool get isLoading => _isLoading;
   bool get hasMore => _hasMore;
@@ -149,6 +162,27 @@ class InventoryProvider extends ChangeNotifier {
         }
       }
 
+      // Advanced filters
+      if (_selectedPlotTypes.isNotEmpty) {
+        if (!_selectedPlotTypes.contains(unit.plotType)) {
+          return false;
+        }
+      }
+
+      if (_selectedFacings.isNotEmpty) {
+        if (unit.facing == null || !_selectedFacings.contains(unit.facing)) {
+          return false;
+        }
+      }
+
+      if (_minPrice != null && unit.price < _minPrice!) {
+        return false;
+      }
+      
+      if (_maxPrice != null && unit.price > _maxPrice!) {
+        return false;
+      }
+
       return true;
     }).toList();
   }
@@ -188,6 +222,8 @@ class InventoryProvider extends ChangeNotifier {
   void setStatusFilter(String status) {
     _selectedStatusFilter = status;
     notifyListeners();
+    // Don't call loadInventory(reset: true) if we filter locally, 
+    // but the backend API uses status filter so we keep it.
     loadInventory(reset: true);
   }
 
@@ -195,6 +231,35 @@ class InventoryProvider extends ChangeNotifier {
     _searchQuery = query;
     notifyListeners();
     loadInventory(reset: true);
+  }
+
+  void setAdvancedFilters({
+    List<String>? plotTypes,
+    List<String>? facings,
+    double? minPrice,
+    double? maxPrice,
+  }) {
+    if (plotTypes != null) _selectedPlotTypes = plotTypes;
+    if (facings != null) _selectedFacings = facings;
+    _minPrice = minPrice;
+    _maxPrice = maxPrice;
+    notifyListeners();
+  }
+
+  void clearAdvancedFilters() {
+    _selectedPlotTypes = [];
+    _selectedFacings = [];
+    _minPrice = null;
+    _maxPrice = null;
+    notifyListeners();
+  }
+
+  int get activeAdvancedFiltersCount {
+    int count = 0;
+    if (_selectedPlotTypes.isNotEmpty) count++;
+    if (_selectedFacings.isNotEmpty) count++;
+    if (_minPrice != null || _maxPrice != null) count++;
+    return count;
   }
 
   void toggleFavorite(int unitId) {

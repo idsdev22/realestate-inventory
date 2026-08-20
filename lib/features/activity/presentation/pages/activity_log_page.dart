@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../teams/presentation/providers/teams_provider.dart';
+import '../providers/activity_provider.dart';
 import '../../data/models/activity_log_model.dart';
 
 class ActivityLogPage extends StatefulWidget {
@@ -19,12 +19,12 @@ class _ActivityLogPageState extends State<ActivityLogPage> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-    Future.microtask(() => context.read<TeamsProvider>().fetchActivities(refresh: true));
+    Future.microtask(() => context.read<ActivityProvider>().fetchActivities(refresh: true));
   }
 
   void _onScroll() {
     if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
-      context.read<TeamsProvider>().fetchActivities();
+      context.read<ActivityProvider>().fetchActivities();
     }
   }
 
@@ -36,7 +36,7 @@ class _ActivityLogPageState extends State<ActivityLogPage> {
 
   @override
   Widget build(BuildContext context) {
-    final teamsProvider = context.watch<TeamsProvider>();
+    final teamsProvider = context.watch<ActivityProvider>();
     final activities = teamsProvider.filteredActivities;
 
     // Group activities by group name (Today, Yesterday)
@@ -94,7 +94,7 @@ class _ActivityLogPageState extends State<ActivityLogPage> {
                       Expanded(
                         child: TextField(
                           onChanged: (val) => context
-                              .read<TeamsProvider>()
+                              .read<ActivityProvider>()
                               .setActivitySearchQuery(val),
                           style: GoogleFonts.poppins(fontSize: 14),
                           decoration: InputDecoration(

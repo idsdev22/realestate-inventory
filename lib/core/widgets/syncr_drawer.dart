@@ -11,7 +11,6 @@ import '../../features/inventory/presentation/pages/inventory_overview_page.dart
 import '../../features/requests/presentation/pages/all_requests_page.dart';
 import '../../features/requests/presentation/pages/my_requests_page.dart';
 import '../../features/users/presentation/pages/users_list_page.dart';
-import '../../features/teams/presentation/pages/team_users_page.dart';
 import '../theme/app_theme.dart';
 import 'syncr_badge.dart';
 
@@ -321,20 +320,6 @@ class SyncrDrawer extends StatelessWidget {
                       },
                     ),
                   ] else if (isMarketingAdmin) ...[
-                    _buildNavItem(
-                      context,
-                      icon: Icons.people_outline_rounded,
-                      title: 'My Team & Users',
-                      onTap: () {
-                        Navigator.pop(context);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const TeamUsersPage(),
-                          ),
-                        );
-                      },
-                    ),
                     _buildNavItem(
                       context,
                       icon: Icons.pie_chart_outline_rounded,

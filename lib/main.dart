@@ -12,7 +12,7 @@ import 'features/inventory/presentation/providers/inventory_provider.dart';
 import 'features/requests/presentation/providers/requests_provider.dart';
 import 'features/requests/presentation/providers/all_requests_provider.dart';
 import 'features/requests/data/services/request_service.dart';
-import 'features/teams/presentation/providers/teams_provider.dart';
+import 'features/activity/presentation/providers/activity_provider.dart';
 import 'features/activity/data/services/activity_service.dart';
 
 import 'features/projects/data/services/project_service.dart';
@@ -60,8 +60,8 @@ void main() async {
         ChangeNotifierProvider<AllRequestsProvider>(
           create: (_) => AllRequestsProvider(requestService: requestService),
         ),
-        ChangeNotifierProvider<TeamsProvider>(
-          create: (_) => TeamsProvider(activityService: activityService),
+        ChangeNotifierProvider<ActivityProvider>(
+          create: (_) => ActivityProvider(activityService: activityService),
         ),
         ChangeNotifierProvider<CompanyProvider>(
           create: (_) => CompanyProvider(companyService),

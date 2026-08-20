@@ -5,7 +5,6 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/syncr_badge.dart';
 import 'package:realestate_inventory/features/inventory/data/models/unit_model.dart';
 import 'package:realestate_inventory/features/inventory/presentation/providers/inventory_provider.dart';
-import 'package:realestate_inventory/features/teams/presentation/providers/teams_provider.dart';
 import '../providers/requests_provider.dart';
 import 'my_requests_page.dart';
 
@@ -90,7 +89,6 @@ class _RequestToBlockPageState extends State<RequestToBlockPage> {
 
       final requestsProvider = context.read<RequestsProvider>();
       final inventoryProvider = context.read<InventoryProvider>();
-      context.read<TeamsProvider>();
 
       final requestData = {
         'unit_id': widget.unit.id,
@@ -233,15 +231,6 @@ class _RequestToBlockPageState extends State<RequestToBlockPage> {
                               fontWeight: FontWeight.bold,
                               color: AppColors.textPrimary,
                             ),
-                          ),
-                          Icon(
-                            unit.isFavorite
-                                ? Icons.favorite_rounded
-                                : Icons.favorite_border_rounded,
-                            color: unit.isFavorite
-                                ? AppColors.rejected
-                                : AppColors.textMuted,
-                            size: 20,
                           ),
                         ],
                       ),

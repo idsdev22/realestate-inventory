@@ -58,7 +58,7 @@ class AuthProvider extends ChangeNotifier {
   bool get canManageAllUsers => isPromoterAdmin;
   bool get canApproveRequests => isPromoterAdmin;
   bool get canViewActivityLog => isPromoterAdmin || isMarketingAdmin;
-  bool get canRequestBlock => true;
+  bool get canRequestBlock => !isStaffUser;
   bool get canShareUnit => true;
 
   String get displayName {

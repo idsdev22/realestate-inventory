@@ -10,6 +10,7 @@ import '../providers/inventory_provider.dart';
 import 'add_edit_unit_page.dart';
 import 'bulk_actions_page.dart';
 import 'unit_details_page.dart';
+import '../widgets/inventory_filter_sheet.dart';
 
 class InventoryListPage extends StatefulWidget {
   final ProjectModel? project;
@@ -59,6 +60,15 @@ class _InventoryListPageState extends State<InventoryListPage> {
       MaterialPageRoute(
         builder: (_) => BulkActionsPage(selectedUnits: selectedUnits),
       ),
+    );
+  }
+
+  void _showFilterSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const InventoryFilterSheet(),
     );
   }
 
@@ -154,16 +164,37 @@ class _InventoryListPageState extends State<InventoryListPage> {
               ),
             ],
           ] else ...[
-            IconButton(
-              icon: const Icon(
-                Icons.tune_rounded,
-                color: AppColors.textPrimary,
-              ),
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Filter inventory')),
-                );
-              },
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                IconButton(
+                  icon: const Icon(
+                    Icons.tune_rounded,
+                    color: AppColors.textPrimary,
+                  ),
+                  onPressed: () => _showFilterSheet(context),
+                ),
+                if (inventoryProvider.activeAdvancedFiltersCount > 0)
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: AppColors.primary,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        '${inventoryProvider.activeAdvancedFiltersCount}',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ],
           const SizedBox(width: 8),
@@ -227,24 +258,45 @@ class _InventoryListPageState extends State<InventoryListPage> {
                       ),
                     ),
                     const SizedBox(width: 10),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.background,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.borderLight),
-                      ),
-                      child: IconButton(
-                        icon: const Icon(
-                          Icons.tune_rounded,
-                          color: AppColors.iconColor,
-                          size: 20,
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.background,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.borderLight),
+                          ),
+                          child: IconButton(
+                            icon: const Icon(
+                              Icons.tune_rounded,
+                              color: AppColors.iconColor,
+                              size: 20,
+                            ),
+                            onPressed: () => _showFilterSheet(context),
+                          ),
                         ),
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Filter options')),
-                          );
-                        },
-                      ),
+                        if (inventoryProvider.activeAdvancedFiltersCount > 0)
+                          Positioned(
+                            right: -4,
+                            top: -4,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: AppColors.primary,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Text(
+                                '${inventoryProvider.activeAdvancedFiltersCount}',
+                                style: GoogleFonts.poppins(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ],
                 ),

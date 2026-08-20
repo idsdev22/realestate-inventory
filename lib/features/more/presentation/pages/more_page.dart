@@ -11,7 +11,6 @@ import '../../../company_admin/presentation/pages/company_admin_page.dart';
 import '../../../inventory/presentation/pages/inventory_overview_page.dart';
 import '../../../requests/presentation/pages/all_requests_page.dart';
 import '../../../requests/presentation/pages/my_requests_page.dart';
-import '../../../teams/presentation/pages/team_users_page.dart';
 import '../../../users/presentation/pages/users_list_page.dart';
 
 class MorePage extends StatelessWidget {
@@ -22,7 +21,6 @@ class MorePage extends StatelessWidget {
     final authProvider = context.watch<AuthProvider>();
     final isPromoterAdmin = authProvider.isPromoterAdmin;
     final isMarketingAdmin = authProvider.isMarketingAdmin;
-    final isStaffUser = authProvider.isStaffUser;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -227,19 +225,6 @@ class MorePage extends StatelessWidget {
                 title: 'Agency Management',
                 items: [
                   _buildMenuItem(
-                    icon: Icons.people_outline_rounded,
-                    title: 'My Team & Users',
-                    subtitle: 'View agency team members & assign sales staff',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const TeamUsersPage(),
-                        ),
-                      );
-                    },
-                  ),
-                  _buildMenuItem(
                     icon: Icons.pie_chart_outline_rounded,
                     title: 'Inventory Overview',
                     subtitle: 'Status breakdown & analytics',
@@ -274,42 +259,6 @@ class MorePage extends StatelessWidget {
                         context,
                         MaterialPageRoute(
                           builder: (_) => const ActivityLogPage(),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-            ],
-
-            // Workspace (Shown for Staff User)
-            if (isStaffUser) ...[
-              _buildSection(
-                title: 'My Workspace',
-                items: [
-                  _buildMenuItem(
-                    icon: Icons.pie_chart_outline_rounded,
-                    title: 'Inventory Overview',
-                    subtitle: 'Status breakdown & analytics',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const InventoryOverviewPage(),
-                        ),
-                      );
-                    },
-                  ),
-                  _buildMenuItem(
-                    icon: Icons.assignment_outlined,
-                    title: 'My Requests',
-                    subtitle: 'Track my submitted block requests',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const MyRequestsPage(),
                         ),
                       );
                     },

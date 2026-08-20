@@ -47,19 +47,6 @@ class UnitDetailsPage extends StatelessWidget {
           ),
         ),
         actions: [
-          IconButton(
-            icon: Icon(
-              liveUnit.isFavorite
-                  ? Icons.favorite_rounded
-                  : Icons.favorite_border_rounded,
-              color: liveUnit.isFavorite
-                  ? const Color(0xFFEF4444)
-                  : AppColors.textPrimary,
-            ),
-            onPressed: () {
-              inventoryProvider.toggleFavorite(liveUnit.id);
-            },
-          ),
           if (authProvider.isPromoterAdmin)
             IconButton(
               icon: const Icon(
@@ -253,50 +240,51 @@ class UnitDetailsPage extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
             decoration: BoxDecoration(
-                color: Colors.white,
-                border: const Border(
-                  top: BorderSide(color: AppColors.borderLight),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 10,
-                    offset: const Offset(0, -4),
-                  ),
-                ],
+              color: Colors.white,
+              border: const Border(
+                top: BorderSide(color: AppColors.borderLight),
               ),
-              child: SafeArea(
-                child: Row(
-                  children: [
-                    Expanded(
-                      flex: 2,
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'Sharing details for ${liveUnit.unitNo}...',
-                              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, -4),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Sharing details for ${liveUnit.unitNo}...',
                             ),
-                          );
-                        },
-                        icon: const Icon(Icons.share_outlined, size: 18),
-                        label: Text(
-                          'Share',
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
                           ),
+                        );
+                      },
+                      icon: const Icon(Icons.share_outlined, size: 18),
+                      label: Text(
+                        'Share',
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
                         ),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: AppColors.border),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppColors.border),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                     ),
+                  ),
+                  if (authProvider.canRequestBlock) ...[
                     const SizedBox(width: 12),
                     Expanded(
                       flex: 3,
@@ -335,9 +323,10 @@ class UnitDetailsPage extends StatelessWidget {
                       ),
                     ),
                   ],
-                ),
+                ],
               ),
             ),
+          ),
         ],
       ),
     );

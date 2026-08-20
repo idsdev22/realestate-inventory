@@ -66,7 +66,8 @@ class UnitCard extends StatelessWidget {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(4),
                           ),
-                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
                         ),
                         const SizedBox(width: 4),
                       ],
@@ -80,26 +81,7 @@ class UnitCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  Row(
-                    children: [
-                      SyncrBadge.fromStatus(unit.status),
-                      if (showFavorite) ...[
-                        const SizedBox(width: 8),
-                        GestureDetector(
-                          onTap: onFavoriteToggle,
-                          child: Icon(
-                            unit.isFavorite
-                                ? Icons.favorite_rounded
-                                : Icons.favorite_border_rounded,
-                            color: unit.isFavorite
-                                ? const Color(0xFFEF4444)
-                                : AppColors.textMuted,
-                            size: 22,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
+                  Row(children: [SyncrBadge.fromStatus(unit.status)]),
                 ],
               ),
               const SizedBox(height: 10),

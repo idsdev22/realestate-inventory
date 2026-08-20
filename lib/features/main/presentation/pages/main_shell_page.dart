@@ -9,8 +9,7 @@ import '../../../dashboard/presentation/pages/team_dashboard_view.dart';
 import '../../../dashboard/presentation/providers/dashboard_provider.dart';
 import '../../../more/presentation/pages/more_page.dart';
 import '../../../projects/presentation/pages/projects_page.dart';
-import '../../../requests/presentation/pages/my_requests_page.dart';
-import '../../../teams/presentation/pages/team_users_page.dart';
+
 import '../../../users/presentation/pages/users_list_page.dart';
 
 class MainShellPage extends StatefulWidget {
@@ -38,7 +37,9 @@ class _MainShellPageState extends State<MainShellPage> {
     final isPromoterAdmin = authProvider.isPromoterAdmin;
     final isMarketingAdmin = authProvider.isMarketingAdmin;
 
-    // Screens per role (Clean 4 pages per role)
+    final showUsersTab = isPromoterAdmin || isMarketingAdmin;
+
+    // Screens per role
     final List<Widget> pages = [
       isPromoterAdmin
           ? AdminDashboardView(
@@ -48,11 +49,7 @@ class _MainShellPageState extends State<MainShellPage> {
               onNavigateToTab: (index) => setState(() => _currentIndex = index),
             ),
       const ProjectsPage(),
-      isPromoterAdmin
-          ? const UsersListPage(showBackButton: false)
-          : isMarketingAdmin
-          ? const TeamUsersPage()
-          : const MyRequestsPage(),
+      if (showUsersTab) const UsersListPage(showBackButton: false),
       const MorePage(),
     ];
 
@@ -95,21 +92,16 @@ class _MainShellPageState extends State<MainShellPage> {
                   icon: Icons.apartment_rounded,
                   label: 'Projects',
                 ),
+                if (showUsersTab)
+                  _buildNavItem(
+                    index: 2,
+                    icon: isPromoterAdmin
+                        ? Icons.people_alt_rounded
+                        : Icons.group_rounded,
+                    label: isPromoterAdmin ? 'Users' : 'Team',
+                  ),
                 _buildNavItem(
-                  index: 2,
-                  icon: isPromoterAdmin
-                      ? Icons.people_alt_rounded
-                      : isMarketingAdmin
-                      ? Icons.group_rounded
-                      : Icons.assignment_rounded,
-                  label: isPromoterAdmin
-                      ? 'Users'
-                      : isMarketingAdmin
-                      ? 'Team'
-                      : 'Requests',
-                ),
-                _buildNavItem(
-                  index: 3,
+                  index: showUsersTab ? 3 : 2,
                   icon: Icons.more_horiz_rounded,
                   label: 'More',
                 ),
