@@ -149,73 +149,6 @@ class ApiService {
     }
   }
 
-  Future<dynamic> postMultipart(
-    String endpoint, {
-    Map<String, String>? fields,
-    String? fileField,
-    String? filePath,
-    List<int>? fileBytes,
-    String? fileName,
-    Map<String, String>? headers,
-  }) async {
-    final uri = Uri.parse('${ApiConstants.baseUrl}$endpoint');
-    AppLogger.i(
-      'Multipart POST Request: $uri\nFields: $fields\nFilePath: $filePath',
-    );
-    try {
-      final request = http.MultipartRequest('POST', uri);
-
-      final authHeaders = _buildHeaders(extraHeaders: headers);
-      authHeaders.remove(
-        'Content-Type',
-      ); // Multipart sets its own boundary content-type
-      request.headers.addAll(authHeaders);
-
-      if (fields != null) {
-        request.fields.addAll(fields);
-      }
-
-      if (filePath != null && filePath.isNotEmpty) {
-        request.files.add(
-          await http.MultipartFile.fromPath(
-            fileField ?? 'file',
-            filePath,
-            filename: fileName,
-          ),
-        );
-      } else if (fileBytes != null && fileBytes.isNotEmpty) {
-        request.files.add(
-          http.MultipartFile.fromBytes(
-            fileField ?? 'file',
-            fileBytes,
-            filename: fileName ?? 'upload.jpg',
-          ),
-        );
-      }
-
-      final streamedResponse = await _client
-          .send(request)
-          .timeout(ApiConstants.timeout);
-      final response = await http.Response.fromStream(streamedResponse);
-
-      AppLogger.d('Multipart POST Response [${response.statusCode}]: $uri');
-      return _handleResponse(response, endpoint: endpoint);
-    } on SocketException catch (e) {
-      AppLogger.e('Network error for Multipart POST $endpoint', e);
-      throw ApiException(
-        message:
-            'No internet connection. Please check your network and try again.',
-      );
-    } on http.ClientException catch (e) {
-      AppLogger.e('ClientException for Multipart POST $endpoint', e);
-      throw ApiException(message: 'Unable to connect to server: ${e.message}');
-    } catch (e) {
-      if (e is ApiException) rethrow;
-      AppLogger.e('Exception for Multipart POST $endpoint', e);
-      throw ApiException(message: 'Unexpected error: $e');
-    }
-  }
-
   dynamic _handleResponse(http.Response response, {required String endpoint}) {
     dynamic responseData;
     try {
@@ -251,17 +184,14 @@ class ApiService {
           extractedMessage = responseData['message'];
         } else if (responseData['error'] != null) {
           if (responseData['error'] is Map) {
-            extractedMessage =
-                responseData['error']['message'] ?? responseData['error'];
+            extractedMessage = responseData['error']['message'] ?? responseData['error'];
           } else {
             extractedMessage = responseData['error'];
           }
         }
       }
 
-      final message =
-          extractedMessage ??
-          'Request failed with status ${response.statusCode}';
+      final message = extractedMessage ?? 'Request failed with status ${response.statusCode}';
 
       AppLogger.w('API Error ($endpoint) [${response.statusCode}]: $message');
       throw ApiException(

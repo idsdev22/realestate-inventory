@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/full_screen_image_viewer.dart';
 import '../../../../core/widgets/unit_card.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../projects/data/models/project_model.dart';
@@ -11,7 +13,6 @@ import 'add_edit_unit_page.dart';
 import 'bulk_actions_page.dart';
 import 'unit_details_page.dart';
 import '../widgets/inventory_filter_sheet.dart';
-import '../widgets/upload_unit_image_sheet.dart';
 
 class InventoryListPage extends StatefulWidget {
   final ProjectModel? project;
@@ -71,10 +72,6 @@ class _InventoryListPageState extends State<InventoryListPage> {
       backgroundColor: Colors.transparent,
       builder: (context) => const InventoryFilterSheet(),
     );
-  }
-
-  void _showUploadUnitImageSheet(BuildContext context) {
-    UploadUnitImageSheet.show(context);
   }
 
   @override
@@ -137,14 +134,6 @@ class _InventoryListPageState extends State<InventoryListPage> {
                 ),
               )
             else ...[
-              IconButton(
-                tooltip: 'Upload Unit Image',
-                icon: const Icon(
-                  Icons.cloud_upload_outlined,
-                  color: AppColors.textPrimary,
-                ),
-                onPressed: () => _showUploadUnitImageSheet(context),
-              ),
               if (selectedProject != null)
                 IconButton(
                   tooltip: 'Edit Project',
@@ -215,6 +204,10 @@ class _InventoryListPageState extends State<InventoryListPage> {
       ),
       body: Column(
         children: [
+          // Project Cover Image Banner
+          if (selectedProject != null)
+            _buildProjectCoverBanner(context, selectedProject),
+
           // Search Bar & Filter Section
           Container(
             color: Colors.white,
@@ -431,73 +424,493 @@ class _InventoryListPageState extends State<InventoryListPage> {
 
           // Unit Cards List
           Expanded(
-            child: filteredUnits.isEmpty
+            child: inventoryProvider.isLoading && filteredUnits.isEmpty
+                ? _buildSkeletonList()
+                : filteredUnits.isEmpty
                 ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.inbox_rounded,
-                          size: 56,
-                          color: Colors.grey.shade400,
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'No units found',
-                          style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(32),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryLight,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.filter_list_off_rounded,
+                              size: 40,
+                              color: AppColors.primary,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Try changing status filter or search query',
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            color: AppColors.textSecondary,
+                          const SizedBox(height: 16),
+                          Text(
+                            'No matching units found',
+                            style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                            ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 6),
+                          Text(
+                            _searchController.text.isNotEmpty ||
+                                    inventoryProvider.selectedStatusFilter !=
+                                        'All'
+                                ? 'Try clearing your search query or selecting a different status filter'
+                                : 'No units are currently registered for this project',
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              color: AppColors.textSecondary,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          if (_searchController.text.isNotEmpty ||
+                              inventoryProvider.selectedStatusFilter != 'All' ||
+                              inventoryProvider.activeAdvancedFiltersCount >
+                                  0) ...[
+                            const SizedBox(height: 16),
+                            OutlinedButton.icon(
+                              onPressed: () {
+                                _searchController.clear();
+                                inventoryProvider.setSearchQuery('');
+                                inventoryProvider.setStatusFilter('All');
+                                inventoryProvider.clearAdvancedFilters();
+                              },
+                              icon: const Icon(Icons.refresh_rounded, size: 16),
+                              label: Text(
+                                'Reset All Filters',
+                                style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.primary,
+                                side: const BorderSide(
+                                  color: AppColors.primary,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 10,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
                   )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20.0,
-                      vertical: 16.0,
-                    ),
-                    itemCount: filteredUnits.length,
-                    itemBuilder: (context, index) {
-                      final unit = filteredUnits[index];
-                      final isSelected = selectedIds.contains(unit.id);
+                : RefreshIndicator(
+                    onRefresh: () =>
+                        inventoryProvider.loadInventory(reset: true),
+                    color: AppColors.primary,
+                    child: ListView.builder(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20.0,
+                        vertical: 14.0,
+                      ),
+                      itemCount: filteredUnits.length,
+                      itemBuilder: (context, index) {
+                        final unit = filteredUnits[index];
+                        final isSelected = selectedIds.contains(unit.id);
 
-                      return UnitCard(
-                        unit: unit,
-                        isSelected: isSelected,
-                        isSelectionMode: _isSelectionMode,
-                        showFavorite: true,
-                        onFavoriteToggle: () {
-                          inventoryProvider.toggleFavorite(unit.id);
-                        },
-                        onLongPress: null, // Bulk actions hidden overall
-                        onTap: () {
-                          if (_isSelectionMode) {
-                            inventoryProvider.toggleSelection(unit.id);
-                          } else {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => UnitDetailsPage(unit: unit),
-                              ),
-                            );
-                          }
-                        },
-                      );
-                    },
+                        return UnitCard(
+                          key: ValueKey('unit_${unit.id}'),
+                          unit: unit,
+                          isSelected: isSelected,
+                          isSelectionMode: _isSelectionMode,
+                          showFavorite: true,
+                          onFavoriteToggle: () {
+                            inventoryProvider.toggleFavorite(unit.id);
+                          },
+                          onLongPress: null,
+                          onTap: () {
+                            if (_isSelectionMode) {
+                              inventoryProvider.toggleSelection(unit.id);
+                            } else {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => UnitDetailsPage(unit: unit),
+                                ),
+                              );
+                            }
+                          },
+                        );
+                      },
+                    ),
                   ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildProjectCoverBanner(BuildContext context, ProjectModel project) {
+    final heroTag = 'project-cover-${project.id}';
+    final imageUrl = project.imageUrl;
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+      height: 155,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Background Image with Hero
+            Hero(tag: heroTag, child: _buildCoverImage(imageUrl)),
+
+            // Gradient Overlay for Readability
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.3),
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.85),
+                  ],
+                  stops: const [0.0, 0.35, 1.0],
+                ),
+              ),
+            ),
+
+            // Top-right Full View & Zoom action badge
+            Positioned(
+              top: 10,
+              right: 10,
+              child: Material(
+                color: Colors.black.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(20),
+                child: InkWell(
+                  onTap: () => _openFullScreenViewer(context, project, heroTag),
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.35),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.zoom_in_rounded,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Full View & Zoom',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // Bottom Project Metadata Overlay
+            Positioned(
+              left: 14,
+              right: 14,
+              bottom: 12,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 7,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                project.projectType,
+                                style: GoogleFonts.poppins(
+                                  color: Colors.white,
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            if (project.approvalDetails != null &&
+                                project.approvalDetails!.trim().isNotEmpty) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 7,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.available,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  project.approval,
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.white,
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          project.name,
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black.withValues(alpha: 0.6),
+                                blurRadius: 4,
+                                offset: const Offset(0, 1),
+                              ),
+                            ],
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.location_on_rounded,
+                              color: Colors.white70,
+                              size: 13,
+                            ),
+                            const SizedBox(width: 3),
+                            Expanded(
+                              child: Text(
+                                project.location.isNotEmpty
+                                    ? '${project.location}${project.city.isNotEmpty ? ', ${project.city}' : ''}'
+                                    : (project.city.isNotEmpty
+                                          ? project.city
+                                          : 'Prime Location'),
+                                style: GoogleFonts.poppins(
+                                  color: Colors.white70,
+                                  fontSize: 11,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+
+                  // Quick tap to full view circular zoom icon
+                  Material(
+                    color: Colors.white.withValues(alpha: 0.25),
+                    shape: const CircleBorder(),
+                    child: InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: () =>
+                          _openFullScreenViewer(context, project, heroTag),
+                      child: const Padding(
+                        padding: EdgeInsets.all(7.0),
+                        child: Icon(
+                          Icons.fullscreen_rounded,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Whole Banner InkWell trigger
+            Positioned.fill(
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () => _openFullScreenViewer(context, project, heroTag),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openFullScreenViewer(
+    BuildContext context,
+    ProjectModel project,
+    String heroTag,
+  ) {
+    FullScreenImageViewer.open(
+      context,
+      imageUrl: project.imageUrl,
+      heroTag: heroTag,
+      title: project.name,
+      subtitle: '${project.location}, ${project.city}',
+    );
+  }
+
+  Widget _buildCoverImage(String imageUrl) {
+    if (imageUrl.startsWith('data:image')) {
+      try {
+        final commaIndex = imageUrl.indexOf(',');
+        final base64Data = commaIndex != -1
+            ? imageUrl.substring(commaIndex + 1)
+            : imageUrl;
+        final bytes = base64Decode(base64Data);
+        return Image.memory(
+          bytes,
+          width: double.infinity,
+          height: double.infinity,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => _buildCoverFallback(),
+        );
+      } catch (e) {
+        return _buildCoverFallback();
+      }
+    }
+    return Image.network(
+      imageUrl,
+      width: double.infinity,
+      height: double.infinity,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) => _buildCoverFallback(),
+    );
+  }
+
+  Widget _buildCoverFallback() {
+    return Container(
+      color: AppColors.primaryLight,
+      child: const Center(
+        child: Icon(
+          Icons.apartment_rounded,
+          size: 48,
+          color: AppColors.primary,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSkeletonList() {
+    return ListView.builder(
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 14.0),
+      itemCount: 4,
+      itemBuilder: (context, index) {
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.borderLight),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    width: 90,
+                    height: 18,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  Container(
+                    width: 70,
+                    height: 22,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Container(
+                width: 140,
+                height: 14,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    width: 80,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  Container(
+                    width: 100,
+                    height: 18,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 

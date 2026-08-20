@@ -39,32 +39,41 @@ class InventoryProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> loadInventory({bool reset = false}) async {
+  Future<void> loadInventory({
+    bool reset = false,
+    bool isSilent = false,
+  }) async {
     if (_inventoryService == null) return;
 
     if (reset) {
       _currentPage = 1;
       _hasMore = true;
-      _units.clear();
     }
 
     if (!_hasMore || _isLoading) return;
 
     _isLoading = true;
-    notifyListeners();
+    if (!isSilent && _units.isEmpty) {
+      notifyListeners();
+    }
     try {
       final fetchedUnits = await _inventoryService.getInventory(
         page: _currentPage,
         limit: 1000,
-        q: _searchQuery,
-        status: _selectedStatusFilter,
-        projectId: _selectedProjectId?.toString(),
+        q: '',
+        status: null,
+        projectId: (_selectedProjectId != null && _selectedProjectId != -1)
+            ? _selectedProjectId.toString()
+            : null,
       );
 
       if (fetchedUnits.length < 1000) {
         _hasMore = false;
       }
 
+      if (reset || _currentPage == 1) {
+        _units.clear();
+      }
       _units.addAll(fetchedUnits);
       _currentPage++;
     } catch (e) {
@@ -204,33 +213,47 @@ class InventoryProvider extends ChangeNotifier {
       _units.where((u) => u.status == 'Registered').length;
 
   int _getFilteredCount(String? status) {
-    return _units.where((unit) {
+    final matchingUnits = _units.where((unit) {
       if (_selectedProjectId != null && _selectedProjectId != -1) {
         if (unit.projectId != _selectedProjectId) return false;
       }
       if (status == null) return true;
       return unit.status.toLowerCase() == status.toLowerCase();
     }).length;
+
+    // Fallback to project metadata if units haven't loaded into provider memory yet
+    if (matchingUnits == 0 && _units.isEmpty) {
+      final proj = selectedProject;
+      if (proj != null) {
+        if (status == null) return proj.totalUnits;
+        final s = status.toLowerCase();
+        if (s == 'available') return proj.availableUnits;
+        if (s == 'blocked') return proj.blockedUnits;
+        if (s == 'booked') return proj.bookedUnits;
+        if (s == 'registered') return proj.registeredUnits;
+      }
+    }
+
+    return matchingUnits;
   }
 
   void setSelectedProject(int? projectId) {
+    if (_selectedProjectId == projectId && _units.isNotEmpty) return;
     _selectedProjectId = projectId;
     notifyListeners();
     loadInventory(reset: true);
   }
 
   void setStatusFilter(String status) {
+    if (_selectedStatusFilter == status) return;
     _selectedStatusFilter = status;
     notifyListeners();
-    // Don't call loadInventory(reset: true) if we filter locally,
-    // but the backend API uses status filter so we keep it.
-    loadInventory(reset: true);
   }
 
   void setSearchQuery(String query) {
+    if (_searchQuery == query) return;
     _searchQuery = query;
     notifyListeners();
-    loadInventory(reset: true);
   }
 
   void setAdvancedFilters({
@@ -514,35 +537,6 @@ class InventoryProvider extends ChangeNotifier {
         bookedUnits: booked,
         registeredUnits: registered,
       );
-    }
-  }
-
-  Future<bool> uploadUnitImage({
-    required int unitId,
-    required String filePath,
-    int sortOrder = 0,
-    List<int>? fileBytes,
-    String? fileName,
-  }) async {
-    if (_inventoryService == null) return false;
-    _isLoading = true;
-    notifyListeners();
-    try {
-      final success = await _inventoryService.uploadUnitImage(
-        unitId: unitId,
-        filePath: filePath,
-        sortOrder: sortOrder,
-        fileBytes: fileBytes,
-        fileName: fileName,
-      );
-      _isLoading = false;
-      notifyListeners();
-      return success;
-    } catch (e) {
-      debugPrint('Error uploading unit image: $e');
-      _isLoading = false;
-      notifyListeners();
-      return false;
     }
   }
 }

@@ -8,7 +8,6 @@ import '../../../requests/presentation/pages/request_to_block_page.dart';
 import 'package:realestate_inventory/features/inventory/data/models/unit_model.dart';
 import '../providers/inventory_provider.dart';
 import 'add_edit_unit_page.dart';
-import '../widgets/upload_unit_image_sheet.dart';
 
 class UnitDetailsPage extends StatelessWidget {
   final UnitModel unit;
@@ -27,7 +26,7 @@ class UnitDetailsPage extends StatelessWidget {
     );
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -40,30 +39,21 @@ class UnitDetailsPage extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          liveUnit.unitNo,
+          'Unit ${liveUnit.unitNo}',
           style: GoogleFonts.poppins(
             fontSize: 18,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
           ),
         ),
         actions: [
-          if (authProvider.isPromoterAdmin) ...[
-            IconButton(
-              tooltip: 'Upload Image',
-              icon: const Icon(
-                Icons.cloud_upload_outlined,
-                color: AppColors.textPrimary,
-              ),
-              onPressed: () {
-                UploadUnitImageSheet.show(context, preselectedUnit: liveUnit);
-              },
-            ),
+          if (authProvider.isPromoterAdmin)
             IconButton(
               icon: const Icon(
                 Icons.edit_outlined,
                 color: AppColors.textPrimary,
               ),
+              tooltip: 'Edit Unit',
               onPressed: () {
                 Navigator.push(
                   context,
@@ -73,7 +63,6 @@ class UnitDetailsPage extends StatelessWidget {
                 );
               },
             ),
-          ],
           const SizedBox(width: 8),
         ],
       ),
@@ -83,166 +72,246 @@ class UnitDetailsPage extends StatelessWidget {
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(
                 horizontal: 20.0,
-                vertical: 12.0,
+                vertical: 16.0,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Hero Plot Visual
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: Stack(
+                  // Unit Hero Overview Card
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: AppColors.borderLight),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.03),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Image.network(
-                          'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&auto=format&fit=crop&q=80',
-                          height: 200,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              Container(
-                                height: 200,
-                                color: AppColors.primarySurface,
-                                child: const Center(
-                                  child: Icon(
-                                    Icons.landscape_rounded,
-                                    size: 64,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    liveUnit.unitNo,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.location_on_outlined,
+                                        size: 15,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Expanded(
+                                        child: Text(
+                                          liveUnit.projectName,
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w500,
+                                            color: AppColors.textSecondary,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SyncrBadge.fromStatus(liveUnit.status),
+                          ],
+                        ),
+                        const SizedBox(height: 18),
+                        Container(
+                          height: 1,
+                          color: AppColors.borderLight,
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Total Price',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 12,
+                                    color: AppColors.textMuted,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  liveUnit.formattedPrice,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
                                     color: AppColors.primary,
                                   ),
                                 ),
+                              ],
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
                               ),
-                        ),
-                        Positioned(
-                          top: 14,
-                          left: 14,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.6),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              'Plot Layout View',
-                              style: GoogleFonts.poppins(
-                                color: Colors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryLight,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                liveUnit.formattedPricePerSqFt,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.primary,
+                                ),
                               ),
                             ),
-                          ),
+                          ],
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 20),
 
-                  // Unit Title & Status Row
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        liveUnit.unitNo,
-                        style: GoogleFonts.poppins(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      SyncrBadge.fromStatus(liveUnit.status),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-
-                  // Project Location
+                  // Key Metrics Grid
                   Text(
-                    '${liveUnit.projectName}, Coimbatore',
+                    'Plot Specifications',
                     style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      color: AppColors.textSecondary,
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
                     ),
+                  ),
+                  const SizedBox(height: 12),
+                  GridView.count(
+                    crossAxisCount: 2,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    mainAxisSpacing: 10,
+                    crossAxisSpacing: 10,
+                    childAspectRatio: 2.3,
+                    children: [
+                      _buildMetricCard(
+                        icon: Icons.aspect_ratio_rounded,
+                        label: 'Area',
+                        value: '${liveUnit.areaSqFt} sq.ft',
+                      ),
+                      _buildMetricCard(
+                        icon: Icons.explore_outlined,
+                        label: 'Facing',
+                        value: liveUnit.facing?.isNotEmpty == true
+                            ? liveUnit.facing!
+                            : 'East Facing',
+                      ),
+                      _buildMetricCard(
+                        icon: Icons.add_road_rounded,
+                        label: 'Road Width',
+                        value: '${liveUnit.roadWidthFt ?? 30} ft Road',
+                      ),
+                      _buildMetricCard(
+                        icon: Icons.grid_view_rounded,
+                        label: 'Plot Type',
+                        value: liveUnit.plotType.replaceAll(' Plot', ''),
+                      ),
+                      if (liveUnit.dimensions != null &&
+                          liveUnit.dimensions!.trim().isNotEmpty)
+                        _buildMetricCard(
+                          icon: Icons.straighten_rounded,
+                          label: 'Dimensions',
+                          value: liveUnit.dimensions!,
+                        ),
+                      if (liveUnit.approvalDetails != null &&
+                          liveUnit.approvalDetails!.trim().isNotEmpty)
+                        _buildMetricCard(
+                          icon: Icons.verified_outlined,
+                          label: 'Approval',
+                          value: liveUnit.approvalDetails!,
+                        ),
+                    ],
                   ),
                   const SizedBox(height: 20),
 
-                  // 4 Feature Chips (Area, Road, Facing, Plot Type)
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildFeatureTile(
-                          icon: Icons.crop_square_rounded,
-                          label: '${liveUnit.areaSqFt} sq.ft',
+                  // Additional Details Card
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.borderLight),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Property Information',
+                          style: GoogleFonts.poppins(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _buildFeatureTile(
-                          icon: Icons.alt_route_rounded,
-                          label: '${liveUnit.roadWidthFt ?? 30} ft Road',
+                        const SizedBox(height: 14),
+                        _buildDetailRow(
+                          'Block / Phase',
+                          liveUnit.blockPhase?.isNotEmpty == true
+                              ? liveUnit.blockPhase!
+                              : 'Main Phase',
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _buildFeatureTile(
-                          icon: Icons.explore_outlined,
-                          label: liveUnit.facing ?? '',
+                        const Divider(height: 22, color: AppColors.borderLight),
+                        _buildDetailRow(
+                          'Corner Plot',
+                          liveUnit.isCorner ? 'Yes (Corner)' : 'No',
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _buildFeatureTile(
-                          icon: Icons.grid_view_rounded,
-                          label: liveUnit.plotType.replaceAll(' Plot', ''),
+                        if (liveUnit.isPremium) ...[
+                          const Divider(
+                              height: 22, color: AppColors.borderLight),
+                          _buildDetailRow('Premium Plot', 'Yes (Premium)'),
+                        ],
+                        const Divider(height: 22, color: AppColors.borderLight),
+                        _buildDetailRow('Plot Type', liveUnit.plotType),
+                        const Divider(height: 22, color: AppColors.borderLight),
+                        _buildDetailRow(
+                          'Approval Details',
+                          liveUnit.approvalDetails?.isNotEmpty == true
+                              ? liveUnit.approvalDetails!
+                              : 'DTCP Approved',
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Pricing Section
-                  Text(
-                    'Pricing',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+                        if (liveUnit.remarks != null &&
+                            liveUnit.remarks!.trim().isNotEmpty) ...[
+                          const Divider(
+                              height: 22, color: AppColors.borderLight),
+                          _buildDetailRow('Remarks', liveUnit.remarks!),
+                        ],
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  _buildDetailRow(
-                    'Total Price',
-                    liveUnit.formattedPrice,
-                    isBold: true,
-                  ),
-                  const Divider(height: 20, color: AppColors.borderLight),
-                  _buildDetailRow(
-                    'Price per sq.ft',
-                    liveUnit.formattedPricePerSqFt,
-                  ),
                   const SizedBox(height: 24),
-
-                  // Details Section
-                  Text(
-                    'Details',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildDetailRow('Plot Type', liveUnit.plotType),
-                  const Divider(height: 20, color: AppColors.borderLight),
-                  _buildDetailRow('Dimensions', liveUnit.dimensions ?? ''),
-                  const Divider(height: 20, color: AppColors.borderLight),
-                  _buildDetailRow('Approval', liveUnit.approvalDetails ?? ''),
-
-                  if (liveUnit.remarks != null &&
-                      liveUnit.remarks!.isNotEmpty) ...[
-                    const Divider(height: 20, color: AppColors.borderLight),
-                    _buildDetailRow('Remarks', liveUnit.remarks!),
-                  ],
-                  const SizedBox(height: 30),
                 ],
               ),
             ),
@@ -274,7 +343,7 @@ class UnitDetailsPage extends StatelessWidget {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
-                              'Sharing details for ${liveUnit.unitNo}...',
+                              'Sharing plot details for Unit ${liveUnit.unitNo}...',
                             ),
                           ),
                         );
@@ -288,6 +357,7 @@ class UnitDetailsPage extends StatelessWidget {
                         ),
                       ),
                       style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.textPrimary,
                         side: const BorderSide(color: AppColors.border),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
@@ -301,8 +371,7 @@ class UnitDetailsPage extends StatelessWidget {
                     Expanded(
                       flex: 3,
                       child: ElevatedButton(
-                        onPressed:
-                            liveUnit.status == 'Booked' ||
+                        onPressed: liveUnit.status == 'Booked' ||
                                 liveUnit.status == 'Registered'
                             ? null
                             : () {
@@ -344,28 +413,56 @@ class UnitDetailsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildFeatureTile({required IconData icon, required String label}) {
+  Widget _buildMetricCard({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.circular(12),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.borderLight),
       ),
-      child: Column(
+      child: Row(
         children: [
-          Icon(icon, size: 20, color: AppColors.iconColor),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            style: GoogleFonts.poppins(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: AppColors.textPrimary,
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.primaryLight,
+              borderRadius: BorderRadius.circular(10),
             ),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+            child: Icon(icon, size: 18, color: AppColors.primary),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  label,
+                  style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    color: AppColors.textMuted,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  value,
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -380,8 +477,9 @@ class UnitDetailsPage extends StatelessWidget {
         Text(
           label,
           style: GoogleFonts.poppins(
-            fontSize: 14,
+            fontSize: 13,
             color: AppColors.textSecondary,
+            fontWeight: FontWeight.normal,
           ),
         ),
         const SizedBox(width: 16),
@@ -389,7 +487,7 @@ class UnitDetailsPage extends StatelessWidget {
           child: Text(
             value,
             style: GoogleFonts.poppins(
-              fontSize: isBold ? 16 : 14,
+              fontSize: isBold ? 14 : 13,
               fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
               color: AppColors.textPrimary,
             ),
