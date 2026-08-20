@@ -73,7 +73,7 @@ class _AddEditCompanyPageState extends State<AddEditCompanyPage> {
 
   Future<void> _submitForm() async {
     final auth = context.read<AuthProvider>();
-    if (!auth.isAdmin) {
+    if (!auth.isPromoterAdmin) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Access Denied: Only Promoter Admins can manage companies.'),
@@ -146,7 +146,7 @@ class _AddEditCompanyPageState extends State<AddEditCompanyPage> {
     final companyProvider = context.watch<CompanyProvider>();
     final invProvider = context.watch<InventoryProvider>();
     final authProvider = context.watch<AuthProvider>();
-    final isPromoterAdmin = authProvider.isAdmin;
+    final isPromoterAdmin = authProvider.isPromoterAdmin;
 
     return Scaffold(
       backgroundColor: AppColors.background,

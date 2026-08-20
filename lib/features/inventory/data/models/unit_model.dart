@@ -14,12 +14,13 @@ class UnitModel {
   final bool isPremium;
   final bool isCorner;
   final String? approvalDetails;
-  final String status; // 'available', 'on_hold', 'blocked', 'booked', 'registered'
+  final String
+  status; // 'available', 'on_hold', 'blocked', 'booked', 'registered'
   final String? remarks;
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final DateTime? deletedAt;
-  
+
   // These are UI-only fields that might not be in this table but used locally
   final bool isFavorite;
   final String? customerName;
@@ -53,8 +54,12 @@ class UnitModel {
 
   factory UnitModel.fromJson(Map<String, dynamic> json) {
     return UnitModel(
-      id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? '') ?? 0,
-      projectId: json['project_id'] is int ? json['project_id'] : int.tryParse(json['project_id']?.toString() ?? '') ?? 0,
+      id: json['id'] is int
+          ? json['id']
+          : int.tryParse(json['id']?.toString() ?? '') ?? 0,
+      projectId: json['project_id'] is int
+          ? json['project_id']
+          : int.tryParse(json['project_id']?.toString() ?? '') ?? 0,
       projectName: json['project_name'] ?? 'Unknown Project',
       unitNo: json['unit_no'] ?? '',
       blockPhase: json['block_phase'],
@@ -64,15 +69,22 @@ class UnitModel {
       roadWidthFt: double.tryParse(json['road_width_ft']?.toString() ?? ''),
       dimensions: json['dimensions'],
       price: double.tryParse(json['price']?.toString() ?? '0') ?? 0.0,
-      pricePerSqFt: double.tryParse(json['price_per_sqft']?.toString() ?? '0') ?? 0.0,
+      pricePerSqFt:
+          double.tryParse(json['price_per_sqft']?.toString() ?? '0') ?? 0.0,
       isPremium: json['is_premium'] == 1 || json['is_premium'] == true,
       isCorner: json['is_corner'] == 1 || json['is_corner'] == true,
       approvalDetails: json['approval_details'],
       status: json['status'] ?? 'available',
       remarks: json['remarks'],
-      createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at']) : null,
-      updatedAt: json['updated_at'] != null ? DateTime.tryParse(json['updated_at']) : null,
-      deletedAt: json['deleted_at'] != null ? DateTime.tryParse(json['deleted_at']) : null,
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'])
+          : null,
+      updatedAt: json['updated_at'] != null
+          ? DateTime.tryParse(json['updated_at'])
+          : null,
+      deletedAt: json['deleted_at'] != null
+          ? DateTime.tryParse(json['deleted_at'])
+          : null,
       isFavorite: json['is_favorite'] == 1 || json['is_favorite'] == true,
       customerName: json['customer_name'],
       customerPhone: json['customer_phone'],
@@ -80,8 +92,7 @@ class UnitModel {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
+    final map = <String, dynamic>{
       'project_id': projectId,
       'unit_no': unitNo,
       'block_phase': blockPhase,
@@ -98,6 +109,10 @@ class UnitModel {
       'status': status,
       'remarks': remarks,
     };
+    if (id != 0) {
+      map['id'] = id;
+    }
+    return map;
   }
 
   String get formattedPrice {

@@ -124,7 +124,6 @@ class _ProjectsPageState extends State<ProjectsPage> {
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
     final inventoryProvider = context.watch<InventoryProvider>();
-    final canManageProjects = authProvider.canManageProjects;
 
     final allProjects = inventoryProvider.projects;
     final filteredProjects = _searchQuery.trim().isEmpty
@@ -252,8 +251,8 @@ class _ProjectsPageState extends State<ProjectsPage> {
                     ],
                   ),
 
-                  // Add Project Button (For Roles with Project Work Access)
-                  if (canManageProjects) ...[
+                  // Add Project Button (Only for Promoter Admin)
+                  if (authProvider.isPromoterAdmin) ...[
                     const SizedBox(height: 14),
                     SizedBox(
                       width: double.infinity,
@@ -356,13 +355,13 @@ class _ProjectsPageState extends State<ProjectsPage> {
                               ),
                             );
                           },
-                          onEdit: canManageProjects
+                          onEdit: authProvider.isPromoterAdmin
                               ? () => _showAddEditProjectDialog(
                                   context,
                                   project: project,
                                 )
                               : null,
-                          onDelete: canManageProjects
+                          onDelete: authProvider.isPromoterAdmin
                               ? () => _confirmDeleteProject(context, project)
                               : null,
                         );

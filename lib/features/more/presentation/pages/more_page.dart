@@ -7,13 +7,12 @@ import '../../../activity/presentation/pages/activity_log_page.dart';
 import '../../../auth/presentation/pages/login_page.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../company_admin/presentation/pages/companies_list_page.dart';
-import '../../../inventory/presentation/pages/add_edit_unit_page.dart';
+import '../../../company_admin/presentation/pages/company_admin_page.dart';
 import '../../../inventory/presentation/pages/inventory_overview_page.dart';
-import '../../../requests/presentation/pages/my_requests_page.dart';
-import '../../../users/presentation/pages/users_list_page.dart';
-import '../../../teams/presentation/pages/team_users_page.dart';
-
 import '../../../requests/presentation/pages/all_requests_page.dart';
+import '../../../requests/presentation/pages/my_requests_page.dart';
+import '../../../teams/presentation/pages/team_users_page.dart';
+import '../../../users/presentation/pages/users_list_page.dart';
 
 class MorePage extends StatelessWidget {
   const MorePage({super.key});
@@ -21,7 +20,9 @@ class MorePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
-    final isAdmin = authProvider.isAdmin;
+    final isPromoterAdmin = authProvider.isPromoterAdmin;
+    final isMarketingAdmin = authProvider.isMarketingAdmin;
+    final isStaffUser = authProvider.isStaffUser;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -64,7 +65,12 @@ class MorePage extends StatelessWidget {
                     radius: 26,
                     backgroundColor: AppColors.primarySurface,
                     child: Text(
-                      authProvider.user?.initials ?? (isAdmin ? 'PA' : 'ABC'),
+                      authProvider.user?.initials ??
+                          (isPromoterAdmin
+                              ? 'PA'
+                              : isMarketingAdmin
+                              ? 'MA'
+                              : 'SS'),
                       style: GoogleFonts.poppins(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -78,8 +84,7 @@ class MorePage extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          authProvider.user?.name ??
-                              (isAdmin ? 'Promoter Admin' : 'ABC Marketing'),
+                          authProvider.user?.name ?? authProvider.displayName,
                           style: GoogleFonts.poppins(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -91,9 +96,11 @@ class MorePage extends StatelessWidget {
                         const SizedBox(height: 2),
                         Text(
                           authProvider.user?.email ??
-                              (isAdmin
+                              (isPromoterAdmin
                                   ? 'admin@syncr.test'
-                                  : 'abcmarketing@gmail.com'),
+                                  : isMarketingAdmin
+                                  ? 'abcmarketing@gmail.com'
+                                  : 'staff@syncr.test'),
                           style: GoogleFonts.poppins(
                             fontSize: 12,
                             color: AppColors.textSecondary,
@@ -103,10 +110,18 @@ class MorePage extends StatelessWidget {
                         ),
                         const SizedBox(height: 6),
                         SyncrBadge(
-                          label: isAdmin ? 'Promoter Admin' : 'Marketing Team',
-                          type: isAdmin
+                          label:
+                              authProvider.user?.roleFormatted ??
+                              (isPromoterAdmin
+                                  ? 'Promoter Admin'
+                                  : isMarketingAdmin
+                                  ? 'Marketing Team Admin'
+                                  : 'Marketing Team User'),
+                          type: isPromoterAdmin
                               ? SyncrBadgeType.active
-                              : SyncrBadgeType.booked,
+                              : isMarketingAdmin
+                              ? SyncrBadgeType.booked
+                              : SyncrBadgeType.pending,
                         ),
                       ],
                     ),
@@ -116,8 +131,8 @@ class MorePage extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
-            // Promoter Administration (Only shown for Admin)
-            if (isAdmin) ...[
+            // Promoter Administration (Only shown for Promoter Admin)
+            if (isPromoterAdmin) ...[
               _buildSection(
                 title: 'Promoter Administration',
                 items: [
@@ -162,67 +177,147 @@ class MorePage extends StatelessWidget {
                       );
                     },
                   ),
+                  _buildMenuItem(
+                    icon: Icons.admin_panel_settings_outlined,
+                    title: 'Promoter Admin Console',
+                    subtitle: 'System dashboard & company operations overview',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const CompanyAdminPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildMenuItem(
+                    icon: Icons.pie_chart_outline_rounded,
+                    title: 'Inventory Overview',
+                    subtitle: 'Status breakdown & analytics',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const InventoryOverviewPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildMenuItem(
+                    icon: Icons.history_rounded,
+                    title: 'Activity Log',
+                    subtitle: 'Audit trail of inventory & system modifications',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ActivityLogPage(),
+                        ),
+                      );
+                    },
+                  ),
                 ],
               ),
               const SizedBox(height: 20),
             ],
 
-            // Features Menu Section
-            _buildSection(
-              title: 'Features & Modules',
-              items: [
-                _buildMenuItem(
-                  icon: Icons.pie_chart_outline_rounded,
-                  title: 'Inventory Overview',
-                  subtitle: 'Status breakdown & analytics',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const InventoryOverviewPage(),
-                      ),
-                    );
-                  },
-                ),
+            // Agency Management (Shown for Marketing Team Admin)
+            if (isMarketingAdmin) ...[
+              _buildSection(
+                title: 'Agency Management',
+                items: [
+                  _buildMenuItem(
+                    icon: Icons.people_outline_rounded,
+                    title: 'My Team & Users',
+                    subtitle: 'View agency team members & assign sales staff',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const TeamUsersPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildMenuItem(
+                    icon: Icons.pie_chart_outline_rounded,
+                    title: 'Inventory Overview',
+                    subtitle: 'Status breakdown & analytics',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const InventoryOverviewPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildMenuItem(
+                    icon: Icons.assignment_outlined,
+                    title: 'My Requests',
+                    subtitle: 'Track block and booking approvals',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const MyRequestsPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildMenuItem(
+                    icon: Icons.history_rounded,
+                    title: 'Activity Log',
+                    subtitle: 'Recent agency activity logs',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ActivityLogPage(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+            ],
 
-                _buildMenuItem(
-                  icon: Icons.assignment_outlined,
-                  title: 'My Requests',
-                  subtitle: 'Track block and booking approvals',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const MyRequestsPage()),
-                    );
-                  },
-                ),
-                _buildMenuItem(
-                  icon: Icons.people_outline_rounded,
-                  title: 'Team & Users',
-                  subtitle: 'Manage sales executives and agents',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const TeamUsersPage()),
-                    );
-                  },
-                ),
-                _buildMenuItem(
-                  icon: Icons.history_rounded,
-                  title: 'Activity Log',
-                  subtitle: 'Audit trail of inventory modifications',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const ActivityLogPage(),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
+            // Workspace (Shown for Staff User)
+            if (isStaffUser) ...[
+              _buildSection(
+                title: 'My Workspace',
+                items: [
+                  _buildMenuItem(
+                    icon: Icons.pie_chart_outline_rounded,
+                    title: 'Inventory Overview',
+                    subtitle: 'Status breakdown & analytics',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const InventoryOverviewPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildMenuItem(
+                    icon: Icons.assignment_outlined,
+                    title: 'My Requests',
+                    subtitle: 'Track my submitted block requests',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const MyRequestsPage(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+            ],
 
             // Settings & System
             _buildSection(

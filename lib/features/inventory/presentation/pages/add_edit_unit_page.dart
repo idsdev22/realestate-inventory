@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../projects/data/models/project_model.dart';
 import '../../../teams/presentation/providers/teams_provider.dart';
 import 'package:realestate_inventory/features/inventory/data/models/unit_model.dart';
@@ -27,6 +28,7 @@ class _AddEditUnitPageState extends State<AddEditUnitPage> {
   late String _selectedRoadWidth;
   late String _selectedStatus;
 
+  late TextEditingController _projectController;
   late TextEditingController _unitNoController;
   late TextEditingController _plotAreaController;
   late TextEditingController _dimensionsController;
@@ -68,29 +70,27 @@ class _AddEditUnitPageState extends State<AddEditUnitPage> {
     super.initState();
     final edit = widget.unitToEdit;
 
-    _selectedProject =
-        edit?.projectName ?? widget.project?.name ?? 'Royal City';
-    _selectedBlock = edit?.blockPhase ?? 'A Block';
-    _selectedPlotType = edit?.plotType ?? 'Residential Plot';
-    _selectedFacing = edit?.facing?.replaceAll(' Facing', '') ?? 'East';
-    if (!_facings.contains(_selectedFacing)) _selectedFacing = 'East';
+    _selectedProject = edit?.projectName ?? widget.project?.name ?? '';
+    _selectedBlock = edit?.blockPhase ?? _blocks.first;
+    _selectedPlotType = edit?.plotType ?? _plotTypes.first;
+    _selectedFacing = edit?.facing?.replaceAll(' Facing', '') ?? _facings.first;
+    if (!_facings.contains(_selectedFacing)) _selectedFacing = _facings.first;
     _selectedRoadWidth = edit?.roadWidthFt?.toString() ?? '30';
     if (!_roadWidths.contains('$_selectedRoadWidth ft'))
       _selectedRoadWidth = '30';
-    _selectedStatus = edit?.status ?? 'Available';
+    _selectedStatus = edit?.status ?? _statuses.first;
 
-    _unitNoController = TextEditingController(text: edit?.unitNo ?? 'A-125');
+    _projectController = TextEditingController(text: _selectedProject);
+    _unitNoController = TextEditingController(text: edit?.unitNo ?? '');
     _plotAreaController = TextEditingController(
-      text: edit != null ? '${edit.areaSqFt}' : '1500',
+      text: edit != null ? '${edit.areaSqFt}' : '',
     );
-    _dimensionsController = TextEditingController(
-      text: edit?.dimensions ?? '30 x 50',
-    );
+    _dimensionsController = TextEditingController(text: edit?.dimensions ?? '');
     _priceController = TextEditingController(
-      text: edit != null ? '${edit.price.toInt()}' : '4500000',
+      text: edit != null ? '${edit.price.toInt()}' : '',
     );
     _pricePerSqFtController = TextEditingController(
-      text: edit != null ? '${edit.pricePerSqFt.toInt()}' : '3000',
+      text: edit != null ? '${edit.pricePerSqFt.toInt()}' : '',
     );
     _remarksController = TextEditingController(text: edit?.remarks ?? '');
 
@@ -113,6 +113,7 @@ class _AddEditUnitPageState extends State<AddEditUnitPage> {
   void dispose() {
     _priceController.removeListener(_calculatePricePerSqFt);
     _plotAreaController.removeListener(_calculatePricePerSqFt);
+    _projectController.dispose();
     _unitNoController.dispose();
     _plotAreaController.dispose();
     _dimensionsController.dispose();
@@ -123,6 +124,19 @@ class _AddEditUnitPageState extends State<AddEditUnitPage> {
   }
 
   void _saveUnit() {
+    final auth = context.read<AuthProvider>();
+    if (!auth.isPromoterAdmin) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Access Denied: Only Promoter Admins can create or edit units.',
+          ),
+          backgroundColor: AppColors.rejected,
+        ),
+      );
+      return;
+    }
+
     if (_formKey.currentState?.validate() ?? false) {
       final inventoryProvider = context.read<InventoryProvider>();
       context.read<TeamsProvider>();
@@ -130,6 +144,7 @@ class _AddEditUnitPageState extends State<AddEditUnitPage> {
       final isEdit = widget.unitToEdit != null;
       final targetProjectId =
           widget.project?.id ??
+          widget.unitToEdit?.projectId ??
           inventoryProvider.projects
               .firstWhere(
                 (p) => p.name == _selectedProject,
@@ -137,23 +152,28 @@ class _AddEditUnitPageState extends State<AddEditUnitPage> {
               )
               .id;
 
+      final resolvedProjectName =
+          inventoryProvider.projects.any((p) => p.name == _selectedProject)
+          ? _selectedProject
+          : (inventoryProvider.projects.isNotEmpty
+                ? inventoryProvider.projects.first.name
+                : '');
+
       final unit = UnitModel(
-        id: isEdit
-            ? widget.unitToEdit!.id
-            : DateTime.now().millisecondsSinceEpoch % 1000000,
+        id: isEdit ? widget.unitToEdit!.id : 0,
         projectId: targetProjectId,
-        projectName: _selectedProject,
+        projectName: resolvedProjectName,
         blockPhase: _selectedBlock,
         unitNo: _unitNoController.text.trim(),
         plotType: _selectedPlotType,
-        areaSqFt: double.tryParse(_plotAreaController.text.trim()) ?? 1200.0,
+        areaSqFt: double.tryParse(_plotAreaController.text.trim()) ?? 0.0,
         facing: '$_selectedFacing Facing',
         roadWidthFt:
-            double.tryParse(_selectedRoadWidth.replaceAll(' ft', '')) ?? 30,
+            double.tryParse(_selectedRoadWidth.replaceAll(' ft', '')) ?? 0.0,
         dimensions: _dimensionsController.text.trim(),
-        price: double.tryParse(_priceController.text.trim()) ?? 3600000,
+        price: double.tryParse(_priceController.text.trim()) ?? 0.0,
         pricePerSqFt:
-            double.tryParse(_pricePerSqFtController.text.trim()) ?? 3000,
+            double.tryParse(_pricePerSqFtController.text.trim()) ?? 0.0,
         status: _selectedStatus,
         remarks: _remarksController.text.trim().isNotEmpty
             ? _remarksController.text.trim()
@@ -182,7 +202,7 @@ class _AddEditUnitPageState extends State<AddEditUnitPage> {
 
   @override
   Widget build(BuildContext context) {
-    final inventoryProvider = context.watch<InventoryProvider>();
+    context.watch<InventoryProvider>();
     final isEdit = widget.unitToEdit != null;
 
     return Scaffold(
@@ -229,23 +249,10 @@ class _AddEditUnitPageState extends State<AddEditUnitPage> {
                 Row(
                   children: [
                     Expanded(
-                      child: _buildDropdown(
+                      child: _buildTextField(
                         label: 'Project*',
-                        value:
-                            inventoryProvider.projects.any(
-                              (p) => p.name == _selectedProject,
-                            )
-                            ? _selectedProject
-                            : (inventoryProvider.projects.isNotEmpty
-                                  ? inventoryProvider.projects.first.name
-                                  : _selectedProject),
-                        items: inventoryProvider.projects.isNotEmpty
-                            ? inventoryProvider.projects
-                                  .map((p) => p.name)
-                                  .toList()
-                            : [_selectedProject],
-                        onChanged: (val) =>
-                            setState(() => _selectedProject = val!),
+                        controller: _projectController,
+                        readOnly: true,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -505,6 +512,7 @@ class _AddEditUnitPageState extends State<AddEditUnitPage> {
     String? hintText,
     TextInputType keyboardType = TextInputType.text,
     String? Function(String?)? validator,
+    bool readOnly = false,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -522,9 +530,15 @@ class _AddEditUnitPageState extends State<AddEditUnitPage> {
           controller: controller,
           keyboardType: keyboardType,
           validator: validator,
-          style: GoogleFonts.poppins(fontSize: 14),
+          readOnly: readOnly,
+          style: GoogleFonts.poppins(
+            fontSize: 14,
+            color: readOnly ? AppColors.textSecondary : AppColors.textPrimary,
+          ),
           decoration: InputDecoration(
             hintText: hintText,
+            filled: readOnly,
+            fillColor: readOnly ? AppColors.background : null,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 14,

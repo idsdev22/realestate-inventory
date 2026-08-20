@@ -8,6 +8,7 @@ import '../../features/company_admin/presentation/pages/companies_list_page.dart
 import '../../features/company_admin/presentation/pages/company_admin_page.dart';
 import '../../features/inventory/presentation/pages/add_edit_unit_page.dart';
 import '../../features/inventory/presentation/pages/inventory_overview_page.dart';
+import '../../features/requests/presentation/pages/all_requests_page.dart';
 import '../../features/requests/presentation/pages/my_requests_page.dart';
 import '../../features/users/presentation/pages/users_list_page.dart';
 import '../../features/teams/presentation/pages/team_users_page.dart';
@@ -20,7 +21,9 @@ class SyncrDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
-    final isAdmin = authProvider.isAdmin;
+    final isPromoterAdmin = authProvider.isPromoterAdmin;
+    final isMarketingAdmin = authProvider.isMarketingAdmin;
+    final isStaffUser = authProvider.isStaffUser;
 
     return Drawer(
       backgroundColor: Colors.white,
@@ -76,9 +79,11 @@ class SyncrDrawer extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     authProvider.user?.email ??
-                        (isAdmin
+                        (isPromoterAdmin
                             ? 'admin@syncr.test'
-                            : 'abcmarketing@gmail.com'),
+                            : isMarketingAdmin
+                            ? 'abcmarketing@gmail.com'
+                            : 'staff@syncr.test'),
                     style: GoogleFonts.poppins(
                       fontSize: 13,
                       color: AppColors.textSecondary,
@@ -86,19 +91,25 @@ class SyncrDrawer extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   SyncrBadge(
-                    label: isAdmin ? 'Promoter Admin' : 'Marketing Agency',
-                    type: isAdmin
+                    label: isPromoterAdmin
+                        ? 'Promoter Admin'
+                        : isMarketingAdmin
+                        ? 'Marketing Team Admin'
+                        : 'Marketing Team User',
+                    type: isPromoterAdmin
                         ? SyncrBadgeType.active
-                        : SyncrBadgeType.booked,
+                        : isMarketingAdmin
+                        ? SyncrBadgeType.booked
+                        : SyncrBadgeType.pending,
                   ),
                 ],
               ),
             ),
 
-            // Role Switcher Toggle
+            // 3-Way Role Switcher Toggle
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              padding: const EdgeInsets.all(6),
+              padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
                 color: AppColors.primarySurface,
                 borderRadius: BorderRadius.circular(12),
@@ -108,15 +119,15 @@ class SyncrDrawer extends StatelessWidget {
                   Expanded(
                     child: InkWell(
                       onTap: () {
-                        if (!isAdmin) {
+                        if (!isPromoterAdmin) {
                           authProvider.setRole(UserRole.admin);
                         }
                       },
                       borderRadius: BorderRadius.circular(8),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        padding: const EdgeInsets.symmetric(vertical: 7),
                         decoration: BoxDecoration(
-                          color: isAdmin
+                          color: isPromoterAdmin
                               ? AppColors.primary
                               : Colors.transparent,
                           borderRadius: BorderRadius.circular(8),
@@ -125,9 +136,9 @@ class SyncrDrawer extends StatelessWidget {
                           child: Text(
                             'Admin',
                             style: GoogleFonts.poppins(
-                              fontSize: 12,
+                              fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: isAdmin
+                              color: isPromoterAdmin
                                   ? Colors.white
                                   : AppColors.textSecondary,
                             ),
@@ -139,26 +150,57 @@ class SyncrDrawer extends StatelessWidget {
                   Expanded(
                     child: InkWell(
                       onTap: () {
-                        if (isAdmin) {
+                        if (!isMarketingAdmin) {
                           authProvider.setRole(UserRole.marketingTeam);
                         }
                       },
                       borderRadius: BorderRadius.circular(8),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        padding: const EdgeInsets.symmetric(vertical: 7),
                         decoration: BoxDecoration(
-                          color: !isAdmin
+                          color: isMarketingAdmin
                               ? AppColors.primary
                               : Colors.transparent,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Center(
                           child: Text(
-                            'Agency',
+                            'Marketing',
                             style: GoogleFonts.poppins(
-                              fontSize: 12,
+                              fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: !isAdmin
+                              color: isMarketingAdmin
+                                  ? Colors.white
+                                  : AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: InkWell(
+                      onTap: () {
+                        if (!isStaffUser) {
+                          authProvider.setRole(UserRole.staffs);
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 7),
+                        decoration: BoxDecoration(
+                          color: isStaffUser
+                              ? AppColors.primary
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Center(
+                          child: Text(
+                            'Staff',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: isStaffUser
                                   ? Colors.white
                                   : AppColors.textSecondary,
                             ),
@@ -179,7 +221,7 @@ class SyncrDrawer extends StatelessWidget {
                   vertical: 8,
                 ),
                 children: [
-                  if (isAdmin) ...[
+                  if (isPromoterAdmin) ...[
                     _buildNavItem(
                       context,
                       icon: Icons.corporate_fare_rounded,
@@ -204,6 +246,20 @@ class SyncrDrawer extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (_) => const UsersListPage(),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildNavItem(
+                      context,
+                      icon: Icons.assignment_turned_in_outlined,
+                      title: 'All Requests',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const AllRequestsPage(),
                           ),
                         );
                       },
@@ -264,7 +320,35 @@ class SyncrDrawer extends StatelessWidget {
                         );
                       },
                     ),
-                  ] else ...[
+                  ] else if (isMarketingAdmin) ...[
+                    _buildNavItem(
+                      context,
+                      icon: Icons.people_outline_rounded,
+                      title: 'My Team & Users',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const TeamUsersPage(),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildNavItem(
+                      context,
+                      icon: Icons.pie_chart_outline_rounded,
+                      title: 'Inventory Overview',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const InventoryOverviewPage(),
+                          ),
+                        );
+                      },
+                    ),
                     _buildNavItem(
                       context,
                       icon: Icons.assignment_outlined,
@@ -281,14 +365,43 @@ class SyncrDrawer extends StatelessWidget {
                     ),
                     _buildNavItem(
                       context,
-                      icon: Icons.people_outline_rounded,
-                      title: 'My Team & Users',
+                      icon: Icons.history_rounded,
+                      title: 'Activity Log',
                       onTap: () {
                         Navigator.pop(context);
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => const TeamUsersPage(),
+                            builder: (_) => const ActivityLogPage(),
+                          ),
+                        );
+                      },
+                    ),
+                  ] else ...[
+                    _buildNavItem(
+                      context,
+                      icon: Icons.pie_chart_outline_rounded,
+                      title: 'Inventory Overview',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const InventoryOverviewPage(),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildNavItem(
+                      context,
+                      icon: Icons.assignment_outlined,
+                      title: 'My Requests',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const MyRequestsPage(),
                           ),
                         );
                       },

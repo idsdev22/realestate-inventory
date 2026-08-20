@@ -38,7 +38,7 @@ class _CompanyDetailsPageState extends State<CompanyDetailsPage> {
 
   Future<void> _confirmDelete(BuildContext context) async {
     final auth = context.read<AuthProvider>();
-    if (!auth.isAdmin) {
+    if (!auth.isPromoterAdmin) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Only Promoter Admins can delete marketing companies.'),
@@ -111,7 +111,7 @@ class _CompanyDetailsPageState extends State<CompanyDetailsPage> {
   Widget build(BuildContext context) {
     final companyProvider = context.watch<CompanyProvider>();
     final authProvider = context.watch<AuthProvider>();
-    final isPromoterAdmin = authProvider.isAdmin;
+    final isPromoterAdmin = authProvider.isPromoterAdmin;
 
     final company = companyProvider.selectedCompany ?? (widget.initialCompany ?? _company);
     _company = company;

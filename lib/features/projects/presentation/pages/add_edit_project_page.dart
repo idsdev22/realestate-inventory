@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../data/models/project_model.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../inventory/presentation/providers/inventory_provider.dart';
 
 class AddEditProjectPage extends StatefulWidget {
@@ -80,6 +81,19 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
   }
 
   void _saveProject() async {
+    final auth = context.read<AuthProvider>();
+    if (!auth.isPromoterAdmin) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Access Denied: Only Promoter Admins can create or edit projects.',
+          ),
+          backgroundColor: AppColors.rejected,
+        ),
+      );
+      return;
+    }
+
     if (_formKey.currentState?.validate() ?? false) {
       String? uploadedImageUrl = _existingCoverImageUrl;
 

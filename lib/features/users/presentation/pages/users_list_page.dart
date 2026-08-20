@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/syncr_badge.dart';
 import '../../../auth/data/models/user_model.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/user_provider.dart';
 import 'add_edit_user_page.dart';
 
@@ -47,6 +48,31 @@ class _UsersListPageState extends State<UsersListPage> {
   }
 
   Future<void> _deleteUser(UserModel user) async {
+    final auth = context.read<AuthProvider>();
+    if (!auth.canManageUsers) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Access Denied: You do not have permission to delete users.',
+          ),
+          backgroundColor: AppColors.rejected,
+        ),
+      );
+      return;
+    }
+
+    if (!auth.isPromoterAdmin && user.role?.toLowerCase() != 'marketing_team_user') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Access Denied: Marketing Admins can only delete Marketing Team Users.',
+          ),
+          backgroundColor: AppColors.rejected,
+        ),
+      );
+      return;
+    }
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(

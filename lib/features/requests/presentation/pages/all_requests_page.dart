@@ -93,7 +93,7 @@ class _AllRequestsPageState extends State<AllRequestsPage> {
             const SizedBox(height: 24),
             Consumer<AuthProvider>(
               builder: (context, auth, child) {
-                if (!auth.isAdmin) {
+                if (!auth.isPromoterAdmin) {
                   return SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(

@@ -14,10 +14,7 @@ import 'unit_details_page.dart';
 class InventoryListPage extends StatefulWidget {
   final ProjectModel? project;
 
-  const InventoryListPage({
-    super.key,
-    this.project,
-  });
+  const InventoryListPage({super.key, this.project});
 
   @override
   State<InventoryListPage> createState() => _InventoryListPageState();
@@ -32,7 +29,9 @@ class _InventoryListPageState extends State<InventoryListPage> {
     super.initState();
     if (widget.project != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        context.read<InventoryProvider>().setSelectedProject(widget.project!.id);
+        context.read<InventoryProvider>().setSelectedProject(
+          widget.project!.id,
+        );
       });
     }
   }
@@ -67,7 +66,7 @@ class _InventoryListPageState extends State<InventoryListPage> {
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
     final inventoryProvider = context.watch<InventoryProvider>();
-    final canManageProjects = authProvider.canManageProjects;
+    final isPromoterAdmin = authProvider.isPromoterAdmin;
     final isRoot = ModalRoute.of(context)?.canPop != true;
 
     final selectedProject = widget.project ?? inventoryProvider.selectedProject;
@@ -84,12 +83,18 @@ class _InventoryListPageState extends State<InventoryListPage> {
         leading: isRoot
             ? Builder(
                 builder: (ctx) => IconButton(
-                  icon: const Icon(Icons.menu_rounded, color: AppColors.textPrimary),
+                  icon: const Icon(
+                    Icons.menu_rounded,
+                    color: AppColors.textPrimary,
+                  ),
                   onPressed: () => Scaffold.of(ctx).openDrawer(),
                 ),
               )
             : IconButton(
-                icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+                icon: const Icon(
+                  Icons.arrow_back_rounded,
+                  color: AppColors.textPrimary,
+                ),
                 onPressed: () => Navigator.pop(context),
               ),
         title: Text(
@@ -101,7 +106,7 @@ class _InventoryListPageState extends State<InventoryListPage> {
           ),
         ),
         actions: [
-          if (canManageProjects) ...[
+          if (isPromoterAdmin) ...[
             if (_isSelectionMode)
               TextButton(
                 onPressed: () {
@@ -120,24 +125,21 @@ class _InventoryListPageState extends State<InventoryListPage> {
               if (selectedProject != null)
                 IconButton(
                   tooltip: 'Edit Project',
-                  icon: const Icon(Icons.edit_note_rounded, color: AppColors.textPrimary),
+                  icon: const Icon(
+                    Icons.edit_note_rounded,
+                    color: AppColors.textPrimary,
+                  ),
                   onPressed: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => AddEditProjectPage(project: selectedProject),
+                        builder: (_) =>
+                            AddEditProjectPage(project: selectedProject),
                         fullscreenDialog: true,
                       ),
                     );
                   },
                 ),
-              IconButton(
-                tooltip: 'Select Units for Bulk Action',
-                icon: const Icon(Icons.checklist_rounded, color: AppColors.textPrimary),
-                onPressed: () {
-                  setState(() => _isSelectionMode = true);
-                },
-              ),
               IconButton(
                 tooltip: 'Add Unit',
                 icon: const Icon(Icons.add_rounded, color: AppColors.primary),
@@ -153,7 +155,10 @@ class _InventoryListPageState extends State<InventoryListPage> {
             ],
           ] else ...[
             IconButton(
-              icon: const Icon(Icons.tune_rounded, color: AppColors.textPrimary),
+              icon: const Icon(
+                Icons.tune_rounded,
+                color: AppColors.textPrimary,
+              ),
               onPressed: () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Filter inventory')),
@@ -161,7 +166,7 @@ class _InventoryListPageState extends State<InventoryListPage> {
               },
             ),
           ],
-          const SizedBox(width: 6),
+          const SizedBox(width: 8),
         ],
       ),
       body: Column(
@@ -184,7 +189,8 @@ class _InventoryListPageState extends State<InventoryListPage> {
                         ),
                         child: TextField(
                           controller: _searchController,
-                          onChanged: (val) => inventoryProvider.setSearchQuery(val),
+                          onChanged: (val) =>
+                              inventoryProvider.setSearchQuery(val),
                           style: GoogleFonts.poppins(fontSize: 14),
                           decoration: InputDecoration(
                             hintText: 'Search plot / unit',
@@ -199,7 +205,10 @@ class _InventoryListPageState extends State<InventoryListPage> {
                             ),
                             suffixIcon: _searchController.text.isNotEmpty
                                 ? IconButton(
-                                    icon: const Icon(Icons.clear_rounded, size: 18),
+                                    icon: const Icon(
+                                      Icons.clear_rounded,
+                                      size: 18,
+                                    ),
                                     onPressed: () {
                                       _searchController.clear();
                                       inventoryProvider.setSearchQuery('');
@@ -250,14 +259,18 @@ class _InventoryListPageState extends State<InventoryListPage> {
                         context,
                         label: 'All (${inventoryProvider.countAll})',
                         status: 'All',
-                        isSelected: inventoryProvider.selectedStatusFilter == 'All',
+                        isSelected:
+                            inventoryProvider.selectedStatusFilter == 'All',
                       ),
                       const SizedBox(width: 8),
                       _buildFilterChip(
                         context,
-                        label: 'Available (${inventoryProvider.countAvailable})',
+                        label:
+                            'Available (${inventoryProvider.countAvailable})',
                         status: 'Available',
-                        isSelected: inventoryProvider.selectedStatusFilter == 'Available',
+                        isSelected:
+                            inventoryProvider.selectedStatusFilter ==
+                            'Available',
                         activeBgColor: const Color(0xFFE8F8F0),
                         activeTextColor: AppColors.available,
                       ),
@@ -266,7 +279,8 @@ class _InventoryListPageState extends State<InventoryListPage> {
                         context,
                         label: 'Blocked (${inventoryProvider.countBlocked})',
                         status: 'Blocked',
-                        isSelected: inventoryProvider.selectedStatusFilter == 'Blocked',
+                        isSelected:
+                            inventoryProvider.selectedStatusFilter == 'Blocked',
                         activeBgColor: const Color(0xFFFEF3E2),
                         activeTextColor: AppColors.blocked,
                       ),
@@ -275,7 +289,8 @@ class _InventoryListPageState extends State<InventoryListPage> {
                         context,
                         label: 'Booked (${inventoryProvider.countBooked})',
                         status: 'Booked',
-                        isSelected: inventoryProvider.selectedStatusFilter == 'Booked',
+                        isSelected:
+                            inventoryProvider.selectedStatusFilter == 'Booked',
                         activeBgColor: const Color(0xFFEBF3FE),
                         activeTextColor: AppColors.booked,
                       ),
@@ -306,7 +321,9 @@ class _InventoryListPageState extends State<InventoryListPage> {
                     children: [
                       TextButton(
                         onPressed: () {
-                          inventoryProvider.selectAll(filteredUnits.map((u) => u.id).toList());
+                          inventoryProvider.selectAll(
+                            filteredUnits.map((u) => u.id).toList(),
+                          );
                         },
                         child: Text(
                           'Select All',
@@ -322,13 +339,17 @@ class _InventoryListPageState extends State<InventoryListPage> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 8,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
                           elevation: 0,
                         ),
-                        onPressed: () => _openBulkActions(context, inventoryProvider),
+                        onPressed: () =>
+                            _openBulkActions(context, inventoryProvider),
                         child: Text(
                           'Bulk Actions',
                           style: GoogleFonts.poppins(
@@ -376,7 +397,10 @@ class _InventoryListPageState extends State<InventoryListPage> {
                     ),
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20.0,
+                      vertical: 16.0,
+                    ),
                     itemCount: filteredUnits.length,
                     itemBuilder: (context, index) {
                       final unit = filteredUnits[index];
@@ -390,12 +414,7 @@ class _InventoryListPageState extends State<InventoryListPage> {
                         onFavoriteToggle: () {
                           inventoryProvider.toggleFavorite(unit.id);
                         },
-                        onLongPress: () {
-                          if (canManageProjects && !_isSelectionMode) {
-                            setState(() => _isSelectionMode = true);
-                            inventoryProvider.toggleSelection(unit.id);
-                          }
-                        },
+                        onLongPress: null, // Bulk actions hidden overall
                         onTap: () {
                           if (_isSelectionMode) {
                             inventoryProvider.toggleSelection(unit.id);

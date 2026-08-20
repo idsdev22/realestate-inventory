@@ -6,9 +6,11 @@ import '../../../../core/widgets/syncr_drawer.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../dashboard/presentation/pages/admin_dashboard_view.dart';
 import '../../../dashboard/presentation/pages/team_dashboard_view.dart';
+import '../../../dashboard/presentation/providers/dashboard_provider.dart';
 import '../../../more/presentation/pages/more_page.dart';
 import '../../../projects/presentation/pages/projects_page.dart';
 import '../../../requests/presentation/pages/my_requests_page.dart';
+import '../../../teams/presentation/pages/team_users_page.dart';
 import '../../../users/presentation/pages/users_list_page.dart';
 
 class MainShellPage extends StatefulWidget {
@@ -33,34 +35,36 @@ class _MainShellPageState extends State<MainShellPage> {
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
-    final isAdmin = authProvider.isAdmin;
+    final isPromoterAdmin = authProvider.isPromoterAdmin;
+    final isMarketingAdmin = authProvider.isMarketingAdmin;
 
-    // Screens per role
-    final List<Widget> pages = isAdmin
-        ? [
-            AdminDashboardView(
+    // Screens per role (Clean 4 pages per role)
+    final List<Widget> pages = [
+      isPromoterAdmin
+          ? AdminDashboardView(
+              onNavigateToTab: (index) => setState(() => _currentIndex = index),
+            )
+          : TeamDashboardView(
               onNavigateToTab: (index) => setState(() => _currentIndex = index),
             ),
-            const ProjectsPage(),
-            const UsersListPage(showBackButton: false),
-            const MorePage(),
-          ]
-        : [
-            TeamDashboardView(
-              onNavigateToTab: (index) => setState(() => _currentIndex = index),
-            ),
-            const ProjectsPage(),
-            const MyRequestsPage(),
-            const MorePage(),
-          ];
+      const ProjectsPage(),
+      isPromoterAdmin
+          ? const UsersListPage(showBackButton: false)
+          : isMarketingAdmin
+          ? const TeamUsersPage()
+          : const MyRequestsPage(),
+      const MorePage(),
+    ];
+
+    // Ensure current index is valid
+    if (_currentIndex >= pages.length) {
+      _currentIndex = pages.length - 1;
+    }
 
     return Scaffold(
       key: _scaffoldKey,
       drawer: const SyncrDrawer(),
-      body: IndexedStack(
-        index: _currentIndex < pages.length ? _currentIndex : 0,
-        children: pages,
-      ),
+      body: IndexedStack(index: _currentIndex, children: pages),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -83,8 +87,8 @@ class _MainShellPageState extends State<MainShellPage> {
               children: [
                 _buildNavItem(
                   index: 0,
-                  icon: isAdmin ? Icons.home_rounded : Icons.home_rounded,
-                  label: isAdmin ? 'Dashboard' : 'Home',
+                  icon: Icons.home_rounded,
+                  label: isPromoterAdmin ? 'Dashboard' : 'Home',
                 ),
                 _buildNavItem(
                   index: 1,
@@ -93,10 +97,16 @@ class _MainShellPageState extends State<MainShellPage> {
                 ),
                 _buildNavItem(
                   index: 2,
-                  icon: isAdmin
+                  icon: isPromoterAdmin
                       ? Icons.people_alt_rounded
+                      : isMarketingAdmin
+                      ? Icons.group_rounded
                       : Icons.assignment_rounded,
-                  label: isAdmin ? 'Users' : 'Requests',
+                  label: isPromoterAdmin
+                      ? 'Users'
+                      : isMarketingAdmin
+                      ? 'Team'
+                      : 'Requests',
                 ),
                 _buildNavItem(
                   index: 3,
@@ -120,6 +130,11 @@ class _MainShellPageState extends State<MainShellPage> {
 
     return InkWell(
       onTap: () {
+        if (index == 0 && _currentIndex != 0) {
+          final provider = context.read<DashboardProvider>();
+          provider.reset();
+          provider.loadDashboardData();
+        }
         setState(() {
           _currentIndex = index;
         });

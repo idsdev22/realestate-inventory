@@ -54,7 +54,7 @@ class _CompaniesListPageState extends State<CompaniesListPage> {
 
   Future<void> _deleteCompany(CompanyModel company) async {
     final auth = context.read<AuthProvider>();
-    if (!auth.isAdmin) {
+    if (!auth.isPromoterAdmin) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -154,7 +154,7 @@ class _CompaniesListPageState extends State<CompaniesListPage> {
   Widget build(BuildContext context) {
     final companyProvider = context.watch<CompanyProvider>();
     final authProvider = context.watch<AuthProvider>();
-    final isPromoterAdmin = authProvider.isAdmin;
+    final isPromoterAdmin = authProvider.isPromoterAdmin;
     final filteredCompanies = companyProvider.filteredCompanies;
 
     return Scaffold(

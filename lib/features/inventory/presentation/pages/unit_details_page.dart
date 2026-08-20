@@ -12,16 +12,12 @@ import 'add_edit_unit_page.dart';
 class UnitDetailsPage extends StatelessWidget {
   final UnitModel unit;
 
-  const UnitDetailsPage({
-    super.key,
-    required this.unit,
-  });
+  const UnitDetailsPage({super.key, required this.unit});
 
   @override
   Widget build(BuildContext context) {
     final inventoryProvider = context.watch<InventoryProvider>();
     final authProvider = context.watch<AuthProvider>();
-    final canManageProjects = authProvider.canManageProjects;
 
     // Get live unit model from provider if updated
     final liveUnit = inventoryProvider.units.firstWhere(
@@ -36,7 +32,10 @@ class UnitDetailsPage extends StatelessWidget {
         elevation: 0,
         scrolledUnderElevation: 0.5,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+          icon: const Icon(
+            Icons.arrow_back_rounded,
+            color: AppColors.textPrimary,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -50,16 +49,23 @@ class UnitDetailsPage extends StatelessWidget {
         actions: [
           IconButton(
             icon: Icon(
-              liveUnit.isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-              color: liveUnit.isFavorite ? const Color(0xFFEF4444) : AppColors.textPrimary,
+              liveUnit.isFavorite
+                  ? Icons.favorite_rounded
+                  : Icons.favorite_border_rounded,
+              color: liveUnit.isFavorite
+                  ? const Color(0xFFEF4444)
+                  : AppColors.textPrimary,
             ),
             onPressed: () {
               inventoryProvider.toggleFavorite(liveUnit.id);
             },
           ),
-          if (canManageProjects)
+          if (authProvider.isPromoterAdmin)
             IconButton(
-              icon: const Icon(Icons.edit_outlined, color: AppColors.textPrimary),
+              icon: const Icon(
+                Icons.edit_outlined,
+                color: AppColors.textPrimary,
+              ),
               onPressed: () {
                 Navigator.push(
                   context,
@@ -76,7 +82,10 @@ class UnitDetailsPage extends StatelessWidget {
         children: [
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20.0,
+                vertical: 12.0,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -90,19 +99,27 @@ class UnitDetailsPage extends StatelessWidget {
                           height: 200,
                           width: double.infinity,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => Container(
-                            height: 200,
-                            color: AppColors.primarySurface,
-                            child: const Center(
-                              child: Icon(Icons.landscape_rounded, size: 64, color: AppColors.primary),
-                            ),
-                          ),
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(
+                                height: 200,
+                                color: AppColors.primarySurface,
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.landscape_rounded,
+                                    size: 64,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ),
                         ),
                         Positioned(
                           top: 14,
                           left: 14,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.black.withValues(alpha: 0.6),
                               borderRadius: BorderRadius.circular(8),
@@ -193,9 +210,16 @@ class UnitDetailsPage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _buildDetailRow('Total Price', liveUnit.formattedPrice, isBold: true),
+                  _buildDetailRow(
+                    'Total Price',
+                    liveUnit.formattedPrice,
+                    isBold: true,
+                  ),
                   const Divider(height: 20, color: AppColors.borderLight),
-                  _buildDetailRow('Price per sq.ft', liveUnit.formattedPricePerSqFt),
+                  _buildDetailRow(
+                    'Price per sq.ft',
+                    liveUnit.formattedPricePerSqFt,
+                  ),
                   const SizedBox(height: 24),
 
                   // Details Section
@@ -214,7 +238,8 @@ class UnitDetailsPage extends StatelessWidget {
                   const Divider(height: 20, color: AppColors.borderLight),
                   _buildDetailRow('Approval', liveUnit.approvalDetails ?? ''),
 
-                  if (liveUnit.remarks != null && liveUnit.remarks!.isNotEmpty) ...[
+                  if (liveUnit.remarks != null &&
+                      liveUnit.remarks!.isNotEmpty) ...[
                     const Divider(height: 20, color: AppColors.borderLight),
                     _buildDetailRow('Remarks', liveUnit.remarks!),
                   ],
@@ -228,91 +253,97 @@ class UnitDetailsPage extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
             decoration: BoxDecoration(
-              color: Colors.white,
-              border: const Border(top: BorderSide(color: AppColors.borderLight)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 10,
-                  offset: const Offset(0, -4),
+                color: Colors.white,
+                border: const Border(
+                  top: BorderSide(color: AppColors.borderLight),
                 ),
-              ],
-            ),
-            child: SafeArea(
-              child: Row(
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Sharing details for ${liveUnit.unitNo}...'),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.share_outlined, size: 18),
-                      label: Text(
-                        'Share',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: AppColors.border),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    flex: 3,
-                    child: ElevatedButton(
-                      onPressed: liveUnit.status == 'Booked' || liveUnit.status == 'Registered'
-                          ? null
-                          : () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => RequestToBlockPage(unit: liveUnit),
-                                ),
-                              );
-                            },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: Text(
-                        liveUnit.status == 'Blocked' ? 'Re-Request Block' : 'Request to Block',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 10,
+                    offset: const Offset(0, -4),
                   ),
                 ],
               ),
+              child: SafeArea(
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Sharing details for ${liveUnit.unitNo}...',
+                              ),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.share_outlined, size: 18),
+                        label: Text(
+                          'Share',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: AppColors.border),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 3,
+                      child: ElevatedButton(
+                        onPressed:
+                            liveUnit.status == 'Booked' ||
+                                liveUnit.status == 'Registered'
+                            ? null
+                            : () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        RequestToBlockPage(unit: liveUnit),
+                                  ),
+                                );
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: Text(
+                          liveUnit.status == 'Blocked'
+                              ? 'Re-Request Block'
+                              : 'Request to Block',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ),
         ],
       ),
     );
   }
 
-  Widget _buildFeatureTile({
-    required IconData icon,
-    required String label,
-  }) {
+  Widget _buildFeatureTile({required IconData icon, required String label}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
       decoration: BoxDecoration(

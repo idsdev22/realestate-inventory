@@ -30,10 +30,7 @@ class AuthProvider extends ChangeNotifier {
   bool get isAuthenticated => _token != null && _token!.isNotEmpty;
   bool get isInitialized => _isInitialized;
   UserRole get currentRole => _currentRole;
-  bool get isAdmin =>
-      _currentRole == UserRole.admin ||
-      _user?.role == 'promoter_admin' ||
-      _user?.role == 'marketing_team_admin';
+  bool get isAdmin => isPromoterAdmin;
 
   bool get isPromoterAdmin =>
       _user?.role?.toLowerCase() == 'promoter_admin' ||
@@ -50,19 +47,19 @@ class AuthProvider extends ChangeNotifier {
       _user?.role?.toLowerCase() == 'staffs' ||
       (_currentRole == UserRole.staffs && _user?.role == null);
 
-  bool get canManageProjects {
-    final role = _user?.role?.toLowerCase();
-    if (role == 'promoter_admin' ||
-        role == 'marketing_team_admin' ||
-        role == 'marketing_team_user') {
-      return true;
-    }
-    return _currentRole == UserRole.admin ||
-        _currentRole == UserRole.marketingTeam ||
-        _currentRole == UserRole.staffs;
-  }
-
-  bool get canAddProject => canManageProjects;
+  // Permission capabilities
+  bool get canManageCompanies => isPromoterAdmin;
+  bool get canManageProjects => isPromoterAdmin;
+  bool get canAddProject => isPromoterAdmin;
+  bool get canEditProject => isPromoterAdmin;
+  bool get canDeleteProject => isPromoterAdmin;
+  bool get canManageUnits => isPromoterAdmin;
+  bool get canManageUsers => isPromoterAdmin || isMarketingAdmin;
+  bool get canManageAllUsers => isPromoterAdmin;
+  bool get canApproveRequests => isPromoterAdmin;
+  bool get canViewActivityLog => isPromoterAdmin || isMarketingAdmin;
+  bool get canRequestBlock => true;
+  bool get canShareUnit => true;
 
   String get displayName {
     if (_user?.name != null && _user!.name!.trim().isNotEmpty) {
@@ -93,6 +90,16 @@ class AuthProvider extends ChangeNotifier {
             : role == UserRole.marketingTeam
             ? 'abcmarketing@gmail.com'
             : 'staff@syncr.test',
+        name: role == UserRole.admin
+            ? 'Promoter Admin'
+            : role == UserRole.marketingTeam
+            ? 'Marketing Admin'
+            : 'Sales Staff',
+        initials: role == UserRole.admin
+            ? 'PA'
+            : role == UserRole.marketingTeam
+            ? 'MA'
+            : 'SS',
       );
     }
     notifyListeners();

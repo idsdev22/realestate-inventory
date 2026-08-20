@@ -13,7 +13,7 @@ class MyRequestsPage extends StatelessWidget {
   void _showRequestDetailsModal(BuildContext context, BlockRequestModel request) {
     final authProvider = context.read<AuthProvider>();
     final requestsProvider = context.read<RequestsProvider>();
-    final isAdmin = authProvider.isAdmin;
+    final isPromoterAdmin = authProvider.isPromoterAdmin;
 
     showModalBottomSheet(
       context: context,
@@ -69,7 +69,7 @@ class MyRequestsPage extends StatelessWidget {
               _buildModalRow('Remarks', request.remarks!),
             const SizedBox(height: 24),
 
-            if (isAdmin && request.status == 'Pending') ...[
+            if (isPromoterAdmin && request.status == 'Pending') ...[
               Row(
                 children: [
                   Expanded(

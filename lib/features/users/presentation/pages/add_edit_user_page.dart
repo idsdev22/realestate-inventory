@@ -56,6 +56,9 @@ class _AddEditUserPageState extends State<AddEditUserPage> {
       _selectedProjectIds = List<int>.from(u.projectIds);
       _isActive = u.isActive;
     } else {
+      if (!authProvider.isPromoterAdmin) {
+        _selectedRole = 'marketing_team_user';
+      }
       _selectedCompanyId = authProvider.user?.companyId;
     }
 
@@ -104,6 +107,32 @@ class _AddEditUserPageState extends State<AddEditUserPage> {
       _selectedRole == 'marketing_team_user';
 
   Future<void> _submitForm() async {
+    final authProvider = context.read<AuthProvider>();
+    if (!authProvider.canManageUsers) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Access Denied: You do not have permission to add or edit users.',
+          ),
+          backgroundColor: AppColors.rejected,
+        ),
+      );
+      return;
+    }
+
+    if (!authProvider.isPromoterAdmin &&
+        _selectedRole != 'marketing_team_user') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Access Denied: Marketing Admins can only manage Marketing Team Users.',
+          ),
+          backgroundColor: AppColors.rejected,
+        ),
+      );
+      return;
+    }
+
     if (!_formKey.currentState!.validate()) return;
 
     if (_requiresCompany && _selectedCompanyId == null) {
@@ -358,7 +387,14 @@ class _AddEditUserPageState extends State<AddEditUserPage> {
               _buildSectionHeader('Role & Permissions', Icons.shield_outlined),
               const SizedBox(height: 12),
               Column(
-                children: _roleOptions.map((role) {
+                children: (authProvider.isPromoterAdmin
+                        ? _roleOptions
+                        : _roleOptions
+                            .where(
+                              (r) => r['value'] == 'marketing_team_user',
+                            )
+                            .toList())
+                    .map((role) {
                   final isSelected = _selectedRole == role['value'];
                   final color = role['color'] as Color;
 
@@ -380,7 +416,9 @@ class _AddEditUserPageState extends State<AddEditUserPage> {
                           _selectedRole = role['value'] as String;
                           if (!_requiresCompany) {
                             _selectedCompanyId = null;
-                          } else if (!context.read<AuthProvider>().isAdmin) {
+                          } else if (!context
+                              .read<AuthProvider>()
+                              .isPromoterAdmin) {
                             _selectedCompanyId = context
                                 .read<AuthProvider>()
                                 .user
@@ -467,61 +505,127 @@ class _AddEditUserPageState extends State<AddEditUserPage> {
                   Icons.business_rounded,
                 ),
                 const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppColors.borderLight),
-                  ),
-                  child: companyProvider.isLoading && companies.isEmpty
-                      ? const Padding(
-                          padding: EdgeInsets.all(12.0),
-                          child: Center(
-                            child: SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
+                authProvider.isPromoterAdmin
+                    ? companyProvider.isLoading && companies.isEmpty
+                        ? Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: AppColors.borderLight),
                             ),
-                          ),
-                        )
-                      : Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 12.0),
-                          child: Row(
-                            children: [
-                              const Icon(
+                            child: const Center(
+                              child: SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                            ),
+                          )
+                        : DropdownButtonFormField<int>(
+                            value: companies.any((c) => c.id == _selectedCompanyId) ? _selectedCompanyId : null,
+                            decoration: InputDecoration(
+                              hintText: 'Select Marketing Company',
+                              prefixIcon: const Icon(
                                 Icons.apartment_rounded,
-                                size: 18,
+                                size: 20,
                                 color: AppColors.primary,
                               ),
-                              const SizedBox(width: 10),
-                              Expanded(
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: const BorderSide(color: AppColors.borderLight),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: const BorderSide(color: AppColors.borderLight),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: const BorderSide(color: AppColors.primary),
+                              ),
+                              filled: true,
+                              fillColor: Colors.white,
+                            ),
+                            items: companies.map((c) {
+                              return DropdownMenuItem<int>(
+                                value: c.id,
                                 child: Text(
-                                  companies.any(
-                                        (c) => c.id == _selectedCompanyId,
-                                      )
-                                      ? companies
-                                            .firstWhere(
-                                              (c) => c.id == _selectedCompanyId,
-                                            )
-                                            .name
-                                      : authProvider.user?.companyName ??
-                                            'Unknown Company',
+                                  c.name,
                                   style: GoogleFonts.poppins(
                                     fontSize: 14,
-                                    fontWeight: FontWeight.w500,
                                     color: AppColors.textPrimary,
                                   ),
-                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (val) {
+                              setState(() {
+                                _selectedCompanyId = val;
+                              });
+                            },
+                            validator: (val) {
+                              if (val == null) {
+                                return 'Please select a company';
+                              }
+                              return null;
+                            },
+                          )
+                    : Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: AppColors.borderLight),
+                        ),
+                        child: companyProvider.isLoading && companies.isEmpty
+                            ? const Padding(
+                                padding: EdgeInsets.all(12.0),
+                                child: Center(
+                                  child: SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  ),
+                                ),
+                              )
+                            : Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 12.0),
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.apartment_rounded,
+                                      size: 18,
+                                      color: AppColors.primary,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        companies.any(
+                                              (c) => c.id == _selectedCompanyId,
+                                            )
+                                            ? companies
+                                                  .firstWhere(
+                                                    (c) => c.id == _selectedCompanyId,
+                                                  )
+                                                  .name
+                                            : authProvider.user?.companyName ??
+                                                  'Unknown Company',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                          color: AppColors.textPrimary,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
-                ),
+                      ),
                 const SizedBox(height: 24),
               ],
 

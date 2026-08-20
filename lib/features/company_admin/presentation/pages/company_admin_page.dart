@@ -13,7 +13,7 @@ class CompanyAdminPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
-    final isPromoterAdmin = authProvider.isAdmin;
+    final isPromoterAdmin = authProvider.isPromoterAdmin;
 
     return Scaffold(
       backgroundColor: AppColors.background,

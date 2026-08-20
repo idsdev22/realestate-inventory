@@ -21,7 +21,7 @@ class DashboardContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
-    if (authProvider.isAdmin) {
+    if (authProvider.isPromoterAdmin) {
       return const AdminDashboardView();
     } else {
       return const TeamDashboardView();
