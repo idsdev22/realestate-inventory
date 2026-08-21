@@ -268,36 +268,38 @@ class _UsersListPageState extends State<UsersListPage> {
                         ),
                       ),
                       const SizedBox(width: 10),
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const AddEditUserPage(),
+
+                      if (!isPromoterAdmin)
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const AddEditUserPage(),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.person_add_rounded, size: 18),
+                          label: Text(
+                            'Add User',
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
                             ),
-                          );
-                        },
-                        icon: const Icon(Icons.person_add_rounded, size: 18),
-                        label: Text(
-                          '+ Add User',
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 0,
                           ),
                         ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 12,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 0,
-                        ),
-                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -577,89 +579,100 @@ class _UsersListPageState extends State<UsersListPage> {
                                     ),
 
                                     // Context Menu
-                                    PopupMenuButton<String>(
-                                      icon: const Icon(
-                                        Icons.more_vert_rounded,
-                                        color: AppColors.iconColor,
-                                        size: 20,
-                                      ),
-                                      onSelected: (action) async {
-                                        if (action == 'edit') {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (_) =>
-                                                  AddEditUserPage(user: user),
-                                            ),
-                                          );
-                                        } else if (action == 'toggle_status') {
-                                          await userProvider.toggleUserStatus(
-                                            user,
-                                          );
-                                        } else if (action == 'delete') {
-                                          if (user.id != null) {
-                                            _deleteUser(user);
+                                    Visibility(
+                                      visible:
+                                          user.role?.toLowerCase() !=
+                                          'promoter_admin',
+                                      maintainSize: true,
+                                      maintainAnimation: true,
+                                      maintainState: true,
+                                      child: PopupMenuButton<String>(
+                                        icon: const Icon(
+                                          Icons.more_vert_rounded,
+                                          color: AppColors.iconColor,
+                                          size: 20,
+                                        ),
+                                        onSelected: (action) async {
+                                          if (action == 'edit') {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) =>
+                                                    AddEditUserPage(user: user),
+                                              ),
+                                            );
+                                          } else if (action ==
+                                              'toggle_status') {
+                                            await userProvider.toggleUserStatus(
+                                              user,
+                                            );
+                                          } else if (action == 'delete') {
+                                            if (user.id != null) {
+                                              _deleteUser(user);
+                                            }
                                           }
-                                        }
-                                      },
-                                      itemBuilder: (ctx) => [
-                                        const PopupMenuItem(
-                                          value: 'edit',
-                                          child: Row(
-                                            children: [
-                                              Icon(
-                                                Icons.edit_outlined,
-                                                size: 18,
-                                                color: AppColors.textPrimary,
+                                        },
+                                        itemBuilder: (ctx) => [
+                                          if (!isPromoterAdmin)
+                                            const PopupMenuItem(
+                                              value: 'edit',
+                                              child: Row(
+                                                children: [
+                                                  Icon(
+                                                    Icons.edit_outlined,
+                                                    size: 18,
+                                                    color:
+                                                        AppColors.textPrimary,
+                                                  ),
+                                                  SizedBox(width: 8),
+                                                  Text('Edit User'),
+                                                ],
                                               ),
-                                              SizedBox(width: 8),
-                                              Text('Edit User'),
-                                            ],
+                                            ),
+                                          PopupMenuItem(
+                                            value: 'toggle_status',
+                                            child: Row(
+                                              children: [
+                                                Icon(
+                                                  user.isActive
+                                                      ? Icons.block_rounded
+                                                      : Icons
+                                                            .check_circle_outline_rounded,
+                                                  size: 18,
+                                                  color: user.isActive
+                                                      ? AppColors.textMuted
+                                                      : AppColors.available,
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Text(
+                                                  user.isActive
+                                                      ? 'Deactivate'
+                                                      : 'Activate',
+                                                ),
+                                              ],
+                                            ),
                                           ),
-                                        ),
-                                        PopupMenuItem(
-                                          value: 'toggle_status',
-                                          child: Row(
-                                            children: [
-                                              Icon(
-                                                user.isActive
-                                                    ? Icons.block_rounded
-                                                    : Icons
-                                                          .check_circle_outline_rounded,
-                                                size: 18,
-                                                color: user.isActive
-                                                    ? AppColors.textMuted
-                                                    : AppColors.available,
-                                              ),
-                                              const SizedBox(width: 8),
-                                              Text(
-                                                user.isActive
-                                                    ? 'Deactivate'
-                                                    : 'Activate',
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        const PopupMenuItem(
-                                          value: 'delete',
-                                          child: Row(
-                                            children: [
-                                              Icon(
-                                                Icons.delete_outline_rounded,
-                                                size: 18,
-                                                color: AppColors.rejected,
-                                              ),
-                                              SizedBox(width: 8),
-                                              Text(
-                                                'Delete User',
-                                                style: TextStyle(
+                                          const PopupMenuItem(
+                                            value: 'delete',
+                                            child: Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.delete_outline_rounded,
+                                                  size: 18,
                                                   color: AppColors.rejected,
                                                 ),
-                                              ),
-                                            ],
+                                                SizedBox(width: 8),
+                                                Text(
+                                                  'Delete User',
+                                                  style: TextStyle(
+                                                    color: AppColors.rejected,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
                                           ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
                                   ],
                                 ),

@@ -24,9 +24,10 @@ class _AllRequestsPageState extends State<AllRequestsPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AllRequestsProvider>().fetchRequests(refresh: true);
     });
-    
+
     _scrollController.addListener(() {
-      if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      if (_scrollController.position.pixels >=
+          _scrollController.position.maxScrollExtent - 200) {
         context.read<AllRequestsProvider>().fetchRequests();
       }
     });
@@ -38,7 +39,10 @@ class _AllRequestsPageState extends State<AllRequestsPage> {
     super.dispose();
   }
 
-  void _showRequestDetailsModal(BuildContext context, BlockRequestModel request) {
+  void _showRequestDetailsModal(
+    BuildContext context,
+    BlockRequestModel request,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -80,7 +84,10 @@ class _AllRequestsPageState extends State<AllRequestsPage> {
             const SizedBox(height: 16),
             _buildModalRow('Unit No.', request.unitNo),
             _buildModalRow('Project', request.projectName),
-            _buildModalRow('Dimensions / Area', '${request.areaSqFt} sq.ft (${request.facing})'),
+            _buildModalRow(
+              'Dimensions / Area',
+              '${request.areaSqFt} sq.ft (${request.facing})',
+            ),
             _buildModalRow('Road Width', request.roadWidth),
             _buildModalRow('Price', request.formattedPrice),
             const Divider(height: 24, color: AppColors.borderLight),
@@ -112,12 +119,16 @@ class _AllRequestsPageState extends State<AllRequestsPage> {
                           Expanded(
                             child: OutlinedButton(
                               onPressed: () async {
-                                final success = await context.read<AllRequestsProvider>().reviewRequest(request.id, 'rejected');
+                                final success = await context
+                                    .read<AllRequestsProvider>()
+                                    .reviewRequest(request.id, 'rejected');
                                 if (success && ctx.mounted) Navigator.pop(ctx);
                               },
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: AppColors.rejected,
-                                side: const BorderSide(color: AppColors.rejected),
+                                side: const BorderSide(
+                                  color: AppColors.rejected,
+                                ),
                               ),
                               child: const Text('Reject'),
                             ),
@@ -126,13 +137,20 @@ class _AllRequestsPageState extends State<AllRequestsPage> {
                           Expanded(
                             child: ElevatedButton(
                               onPressed: () async {
-                                final success = await context.read<AllRequestsProvider>().reviewRequest(request.id, 'approved');
+                                final success = await context
+                                    .read<AllRequestsProvider>()
+                                    .reviewRequest(request.id, 'approved');
                                 if (success && ctx.mounted) {
                                   // Update unit in InventoryProvider to Booked
-                                  final invProvider = context.read<InventoryProvider>();
-                                  final unitIndex = invProvider.units.indexWhere(
-                                    (u) => u.unitNo.toLowerCase() == request.unitNo.toLowerCase() || u.id.toString() == request.id,
-                                  );
+                                  final invProvider = context
+                                      .read<InventoryProvider>();
+                                  final unitIndex = invProvider.units
+                                      .indexWhere(
+                                        (u) =>
+                                            u.unitNo.toLowerCase() ==
+                                                request.unitNo.toLowerCase() ||
+                                            u.id.toString() == request.id,
+                                      );
                                   if (unitIndex != -1) {
                                     final unit = invProvider.units[unitIndex];
                                     invProvider.updateUnit(
@@ -142,7 +160,8 @@ class _AllRequestsPageState extends State<AllRequestsPage> {
                                         customerName: request.customerName,
                                         customerPhone: request.customerPhone,
                                         customerEmail: request.customerEmail,
-                                        expectedBookingDate: request.expectedBookingDate,
+                                        expectedBookingDate:
+                                            request.expectedBookingDate,
                                       ),
                                     );
                                   }
@@ -150,46 +169,51 @@ class _AllRequestsPageState extends State<AllRequestsPage> {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                       backgroundColor: AppColors.available,
-                                      content: Text('Request accepted and marked as Booked!'),
+                                      content: Text(
+                                        'Request accepted and marked as Booked!',
+                                      ),
                                     ),
                                   );
                                 }
                               },
-                              style: ElevatedButton.styleFrom(backgroundColor: AppColors.available),
-                              child: const Text('Approve & Book', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.available,
+                              ),
+                              child: const Text(
+                                'Approve & Book',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 12),
                     ],
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              ScaffoldMessenger.of(ctx).showSnackBar(
-                                const SnackBar(content: Text('Edit feature coming soon')),
-                              );
-                            },
-                            icon: const Icon(Icons.edit, size: 18, color: Colors.white),
-                            label: const Text('Edit', style: TextStyle(color: Colors.white)),
-                            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-                          ),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          final success = await context
+                              .read<AllRequestsProvider>()
+                              .deleteRequest(request.id);
+                          if (success && ctx.mounted) Navigator.pop(ctx);
+                        },
+                        icon: const Icon(
+                          Icons.delete,
+                          size: 18,
+                          color: Colors.white,
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () async {
-                              final success = await context.read<AllRequestsProvider>().deleteRequest(request.id);
-                              if (success && ctx.mounted) Navigator.pop(ctx);
-                            },
-                            icon: const Icon(Icons.delete, size: 18, color: Colors.white),
-                            label: const Text('Delete', style: TextStyle(color: Colors.white)),
-                            style: ElevatedButton.styleFrom(backgroundColor: AppColors.rejected),
-                          ),
+                        label: const Text(
+                          'Delete',
+                          style: TextStyle(color: Colors.white),
                         ),
-                      ],
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.rejected,
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 12),
                     SizedBox(
@@ -217,7 +241,10 @@ class _AllRequestsPageState extends State<AllRequestsPage> {
         children: [
           Text(
             label,
-            style: GoogleFonts.poppins(fontSize: 13, color: AppColors.textSecondary),
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              color: AppColors.textSecondary,
+            ),
           ),
           Flexible(
             child: Text(
@@ -247,7 +274,10 @@ class _AllRequestsPageState extends State<AllRequestsPage> {
         elevation: 0,
         scrolledUnderElevation: 0.5,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+          icon: const Icon(
+            Icons.arrow_back_rounded,
+            color: AppColors.textPrimary,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -261,45 +291,52 @@ class _AllRequestsPageState extends State<AllRequestsPage> {
       ),
       body: Column(
         children: [
-          // Filter Tabs Bar
           Container(
             color: Colors.white,
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _buildTab(
-                    context,
-                    label: 'All',
-                    tab: 'All',
-                    isSelected: provider.selectedTab == 'All',
-                  ),
-                  const SizedBox(width: 8),
-                  _buildTab(
-                    context,
-                    label: 'Pending',
-                    tab: 'Pending',
-                    isSelected: provider.selectedTab == 'Pending',
-                    activeColor: AppColors.pending,
-                  ),
-                  const SizedBox(width: 8),
-                  _buildTab(
-                    context,
-                    label: 'Booked',
-                    tab: 'Booked',
-                    isSelected: provider.selectedTab == 'Booked',
-                    activeColor: AppColors.booked,
-                  ),
-                  const SizedBox(width: 8),
-                  _buildTab(
-                    context,
-                    label: 'Rejected',
-                    tab: 'Rejected',
-                    isSelected: provider.selectedTab == 'Rejected',
-                    activeColor: AppColors.rejected,
-                  ),
-                ],
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.borderLight),
+              ),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _buildTab(
+                      context,
+                      label: 'All',
+                      tab: 'All',
+                      isSelected: provider.selectedTab == 'All',
+                    ),
+                    const SizedBox(width: 4),
+                    _buildTab(
+                      context,
+                      label: 'Pending',
+                      tab: 'Pending',
+                      isSelected: provider.selectedTab == 'Pending',
+                      activeColor: AppColors.pending,
+                    ),
+                    const SizedBox(width: 4),
+                    _buildTab(
+                      context,
+                      label: 'Booked',
+                      tab: 'Booked',
+                      isSelected: provider.selectedTab == 'Booked',
+                      activeColor: AppColors.booked,
+                    ),
+                    const SizedBox(width: 4),
+                    _buildTab(
+                      context,
+                      label: 'Rejected',
+                      tab: 'Rejected',
+                      isSelected: provider.selectedTab == 'Rejected',
+                      activeColor: AppColors.rejected,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -312,7 +349,11 @@ class _AllRequestsPageState extends State<AllRequestsPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline_rounded, color: AppColors.rejected, size: 48),
+                      const Icon(
+                        Icons.error_outline_rounded,
+                        color: AppColors.rejected,
+                        size: 48,
+                      ),
                       const SizedBox(height: 16),
                       Text(
                         provider.errorMessage!,
@@ -369,13 +410,20 @@ class _AllRequestsPageState extends State<AllRequestsPage> {
                 child: ListView.builder(
                   controller: _scrollController,
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20.0,
+                    vertical: 16.0,
+                  ),
                   itemCount: requests.length + (provider.isLoading ? 1 : 0),
                   itemBuilder: (context, index) {
                     if (index == requests.length) {
                       return const Padding(
                         padding: EdgeInsets.all(16.0),
-                        child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: AppColors.primary,
+                          ),
+                        ),
                       );
                     }
 
@@ -391,6 +439,22 @@ class _AllRequestsPageState extends State<AllRequestsPage> {
   }
 
   Widget _buildRequestCard(BuildContext context, BlockRequestModel req) {
+    Color statusColor;
+    switch (req.status.toLowerCase()) {
+      case 'pending':
+        statusColor = AppColors.pending;
+        break;
+      case 'booked':
+      case 'approved':
+        statusColor = AppColors.booked;
+        break;
+      case 'rejected':
+        statusColor = AppColors.rejected;
+        break;
+      default:
+        statusColor = AppColors.primary;
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -405,81 +469,161 @@ class _AllRequestsPageState extends State<AllRequestsPage> {
           ),
         ],
       ),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () => _showRequestDetailsModal(context, req),
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Top Row: Unit No & Status Pill
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    req.unitNo,
-                    style: GoogleFonts.poppins(
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  SyncrBadge.fromStatus(req.status),
-                ],
+              // Left status vertical accent line
+              Container(
+                width: 5,
+                color: statusColor,
               ),
-              const SizedBox(height: 8),
-
-              // Specs
-              Text(
-                '${req.areaSqFt} sq.ft  •  ${req.facing}',
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 4),
-
-              // Date Info
-              Text(
-                '${req.status == 'Pending' ? 'Request on' : req.status == 'Booked' || req.status == 'Approved' ? 'Booked on' : req.status == 'On Hold' ? 'Held on' : 'Rejected on'} ${req.requestedDate}',
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  color: AppColors.textMuted,
-                ),
-              ),
-              const SizedBox(height: 10),
-
-              // Customer Name & Chevron
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  RichText(
-                    text: TextSpan(
-                      text: 'Customer: ',
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        color: AppColors.textSecondary,
-                      ),
-                      children: [
-                        TextSpan(
-                          text: req.customerName,
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Top Row: Unit No & Status Pill
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.home_work_outlined,
+                                size: 18,
+                                color: statusColor,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                req.unitNo,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
+                          SyncrBadge.fromStatus(req.status),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+
+                      // Specs
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.square_foot_outlined,
+                            size: 14,
+                            color: AppColors.textSecondary,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${req.areaSqFt} sq.ft',
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Icon(
+                            Icons.explore_outlined,
+                            size: 14,
+                            color: AppColors.textSecondary,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            req.facing,
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+
+                      // Date Info
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.calendar_today_outlined,
+                            size: 13,
+                            color: AppColors.textMuted,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${req.status == 'Pending'
+                                ? 'Request on'
+                                : req.status == 'Booked' || req.status == 'Approved'
+                                ? 'Booked on'
+                                : req.status == 'On Hold'
+                                ? 'Held on'
+                                : 'Rejected on'} ${req.requestedDate}',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Divider(height: 20, color: AppColors.borderLight),
+
+                      // Customer Name & Chevron
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.person_outline,
+                                  size: 14,
+                                  color: AppColors.textSecondary,
+                                ),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: RichText(
+                                    overflow: TextOverflow.ellipsis,
+                                    text: TextSpan(
+                                      text: 'Customer: ',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 13,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                      children: [
+                                        TextSpan(
+                                          text: req.customerName,
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.textPrimary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(
+                            Icons.chevron_right_rounded,
+                            color: AppColors.iconColor,
+                            size: 20,
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  const Icon(
-                    Icons.chevron_right_rounded,
-                    color: AppColors.iconColor,
-                    size: 22,
-                  ),
-                ],
+                ),
               ),
             ],
           ),
@@ -495,28 +639,56 @@ class _AllRequestsPageState extends State<AllRequestsPage> {
     required bool isSelected,
     Color? activeColor,
   }) {
+    final statusColor = activeColor ?? AppColors.primary;
     return InkWell(
       onTap: () {
         context.read<AllRequestsProvider>().setSelectedTab(tab);
       },
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      borderRadius: BorderRadius.circular(10),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected
-              ? (activeColor != null ? activeColor.withValues(alpha: 0.12) : AppColors.primary)
-              : AppColors.background,
-          borderRadius: BorderRadius.circular(20),
+          color: isSelected ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+          border: isSelected
+              ? Border.all(color: statusColor.withValues(alpha: 0.2), width: 1)
+              : Border.all(color: Colors.transparent, width: 1),
         ),
-        child: Text(
-          label,
-          style: GoogleFonts.poppins(
-            fontSize: 12,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-            color: isSelected
-                ? (activeColor ?? Colors.white)
-                : AppColors.textSecondary,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (activeColor != null) ...[
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: activeColor,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              label,
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                color: isSelected
+                    ? statusColor
+                    : AppColors.textSecondary,
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -163,7 +163,7 @@ class _AddEditUserPageState extends State<AddEditUserPage> {
       payload['company_id'] = _selectedCompanyId;
     }
 
-    if (_passwordController.text.isNotEmpty || !widget.isEditing) {
+    if (_passwordController.text.isNotEmpty) {
       payload['password'] = _passwordController.text;
     }
 
@@ -235,45 +235,6 @@ class _AddEditUserPageState extends State<AddEditUserPage> {
             color: AppColors.textPrimary,
           ),
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16.0),
-            child: TextButton.icon(
-              onPressed: _isSaving ? null : _submitForm,
-              icon: _isSaving
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : const Icon(
-                      Icons.check_rounded,
-                      size: 18,
-                      color: Colors.white,
-                    ),
-              label: Text(
-                widget.isEditing ? 'Update' : 'Save',
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-              style: TextButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
@@ -288,213 +249,206 @@ class _AddEditUserPageState extends State<AddEditUserPage> {
                 Icons.person_outline_rounded,
               ),
               const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.borderLight),
+              TextFormField(
+                controller: _nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Full Name *',
+                  hintText: 'e.g. Ramesh Kumar',
+                  prefixIcon: Icon(Icons.badge_outlined, size: 20),
                 ),
-                child: Column(
-                  children: [
-                    TextFormField(
-                      controller: _nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Full Name *',
-                        hintText: 'e.g. Ramesh Kumar',
-                        prefixIcon: Icon(Icons.badge_outlined, size: 20),
-                      ),
-                      validator: (val) {
-                        if (val == null || val.trim().isEmpty) {
-                          return 'Please enter user full name';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(
-                        labelText: 'Email Address *',
-                        hintText: 'e.g. ramesh@syncr.test',
-                        prefixIcon: Icon(Icons.email_outlined, size: 20),
-                      ),
-                      validator: (val) {
-                        if (val == null || val.trim().isEmpty) {
-                          return 'Please enter email address';
-                        }
-                        if (!val.contains('@') || !val.contains('.')) {
-                          return 'Please enter a valid email address';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _phoneController,
-                      keyboardType: TextInputType.phone,
-                      decoration: const InputDecoration(
-                        labelText: 'Phone Number (Optional)',
-                        hintText: 'e.g. +91 9876543210',
-                        prefixIcon: Icon(Icons.phone_outlined, size: 20),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _passwordController,
-                      obscureText: _obscurePassword,
-                      decoration: InputDecoration(
-                        labelText: widget.isEditing
-                            ? 'Password (Leave blank to keep current)'
-                            : 'Password *',
-                        hintText: widget.isEditing
-                            ? '••••••••'
-                            : 'Enter login password',
-                        prefixIcon: const Icon(
-                          Icons.lock_outline_rounded,
-                          size: 20,
-                        ),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_off_outlined
-                                : Icons.visibility_outlined,
-                            size: 20,
-                          ),
-                          onPressed: () => setState(
-                            () => _obscurePassword = !_obscurePassword,
-                          ),
-                        ),
-                      ),
-                      validator: (val) {
-                        if (!widget.isEditing &&
-                            (val == null || val.trim().isEmpty)) {
-                          return 'Password is required for new users';
-                        }
-                        if (val != null && val.isNotEmpty && val.length < 6) {
-                          return 'Password must be at least 6 characters';
-                        }
-                        return null;
-                      },
-                    ),
-                  ],
+                validator: (val) {
+                  if (val == null || val.trim().isEmpty) {
+                    return 'Please enter user full name';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(
+                  labelText: 'Email Address *',
+                  hintText: 'e.g. ramesh@syncr.test',
+                  prefixIcon: Icon(Icons.email_outlined, size: 20),
+                ),
+                validator: (val) {
+                  if (val == null || val.trim().isEmpty) {
+                    return 'Please enter email address';
+                  }
+                  if (!val.contains('@') || !val.contains('.')) {
+                    return 'Please enter a valid email address';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _phoneController,
+                keyboardType: TextInputType.phone,
+                decoration: const InputDecoration(
+                  labelText: 'Phone Number (Optional)',
+                  hintText: 'e.g. +91 9876543210',
+                  prefixIcon: Icon(Icons.phone_outlined, size: 20),
                 ),
               ),
+              if (widget.isEditing) ...[
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _passwordController,
+                  obscureText: _obscurePassword,
+                  decoration: InputDecoration(
+                    labelText: 'Password (Leave blank to keep current)',
+                    hintText: '••••••••',
+                    prefixIcon: const Icon(
+                      Icons.lock_outline_rounded,
+                      size: 20,
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        size: 20,
+                      ),
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
+                    ),
+                  ),
+                  validator: (val) {
+                    if (val != null && val.isNotEmpty && val.length < 6) {
+                      return 'Password must be at least 6 characters';
+                    }
+                    return null;
+                  },
+                ),
+              ],
               const SizedBox(height: 24),
 
               // Role Selection
               _buildSectionHeader('Role & Permissions', Icons.shield_outlined),
               const SizedBox(height: 12),
               Column(
-                children: (authProvider.isPromoterAdmin
-                        ? _roleOptions
-                        : _roleOptions
-                            .where(
-                              (r) => r['value'] == 'marketing_team_user',
-                            )
-                            .toList())
-                    .map((role) {
-                  final isSelected = _selectedRole == role['value'];
-                  final color = role['color'] as Color;
+                children:
+                    (authProvider.isPromoterAdmin
+                            ? (widget.isEditing
+                                  ? _roleOptions
+                                  : _roleOptions
+                                        .where(
+                                          (r) => r['value'] != 'promoter_admin',
+                                        )
+                                        .toList())
+                            : _roleOptions
+                                  .where(
+                                    (r) => r['value'] == 'marketing_team_user',
+                                  )
+                                  .toList())
+                        .map((role) {
+                          final isSelected = _selectedRole == role['value'];
+                          final color = role['color'] as Color;
 
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 10),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? color.withValues(alpha: 0.05)
-                          : Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: isSelected ? color : AppColors.borderLight,
-                        width: isSelected ? 1.8 : 1,
-                      ),
-                    ),
-                    child: InkWell(
-                      onTap: () {
-                        setState(() {
-                          _selectedRole = role['value'] as String;
-                          if (!_requiresCompany) {
-                            _selectedCompanyId = null;
-                          } else if (!context
-                              .read<AuthProvider>()
-                              .isPromoterAdmin) {
-                            _selectedCompanyId = context
-                                .read<AuthProvider>()
-                                .user
-                                ?.companyId;
-                          }
-                        });
-                      },
-                      borderRadius: BorderRadius.circular(14),
-                      child: Padding(
-                        padding: const EdgeInsets.all(14.0),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: color.withValues(alpha: 0.12),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                role['icon'] as IconData,
-                                color: color,
-                                size: 22,
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 10),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? color.withValues(alpha: 0.05)
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: isSelected
+                                    ? color
+                                    : AppColors.borderLight,
+                                width: isSelected ? 1.8 : 1,
                               ),
                             ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    role['label'] as String,
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: isSelected
-                                          ? color
-                                          : AppColors.textPrimary,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    role['desc'] as String,
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 11,
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Radio<String>(
-                              value: role['value'] as String,
-                              groupValue: _selectedRole,
-                              activeColor: color,
-                              onChanged: (val) {
-                                if (val != null) {
-                                  setState(() {
-                                    _selectedRole = val;
-                                    if (!_requiresCompany) {
-                                      _selectedCompanyId = null;
-                                    } else if (_selectedCompanyId == null) {
-                                      _selectedCompanyId = context
-                                          .read<AuthProvider>()
-                                          .user
-                                          ?.companyId;
-                                    }
-                                  });
-                                }
+                            child: InkWell(
+                              onTap: () {
+                                setState(() {
+                                  _selectedRole = role['value'] as String;
+                                  if (!_requiresCompany) {
+                                    _selectedCompanyId = null;
+                                  } else if (!context
+                                      .read<AuthProvider>()
+                                      .isPromoterAdmin) {
+                                    _selectedCompanyId = context
+                                        .read<AuthProvider>()
+                                        .user
+                                        ?.companyId;
+                                  }
+                                });
                               },
+                              borderRadius: BorderRadius.circular(14),
+                              child: Padding(
+                                padding: const EdgeInsets.all(14.0),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                        color: color.withValues(alpha: 0.12),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        role['icon'] as IconData,
+                                        color: color,
+                                        size: 22,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 14),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            role['label'] as String,
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w600,
+                                              color: isSelected
+                                                  ? color
+                                                  : AppColors.textPrimary,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            role['desc'] as String,
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 11,
+                                              color: AppColors.textSecondary,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Radio<String>(
+                                      value: role['value'] as String,
+                                      groupValue: _selectedRole,
+                                      activeColor: color,
+                                      onChanged: (val) {
+                                        if (val != null) {
+                                          setState(() {
+                                            _selectedRole = val;
+                                            if (!_requiresCompany) {
+                                              _selectedCompanyId = null;
+                                            } else if (_selectedCompanyId ==
+                                                null) {
+                                              _selectedCompanyId = context
+                                                  .read<AuthProvider>()
+                                                  .user
+                                                  ?.companyId;
+                                            }
+                                          });
+                                        }
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList(),
+                          );
+                        })
+                        .toList(),
               ),
               const SizedBox(height: 24),
 
@@ -507,124 +461,87 @@ class _AddEditUserPageState extends State<AddEditUserPage> {
                 const SizedBox(height: 12),
                 authProvider.isPromoterAdmin
                     ? companyProvider.isLoading && companies.isEmpty
-                        ? Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: AppColors.borderLight),
-                            ),
-                            child: const Center(
-                              child: SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              ),
-                            ),
-                          )
-                        : DropdownButtonFormField<int>(
-                            value: companies.any((c) => c.id == _selectedCompanyId) ? _selectedCompanyId : null,
-                            decoration: InputDecoration(
-                              hintText: 'Select Marketing Company',
-                              prefixIcon: const Icon(
-                                Icons.apartment_rounded,
-                                size: 20,
-                                color: AppColors.primary,
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(14),
-                                borderSide: const BorderSide(color: AppColors.borderLight),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(14),
-                                borderSide: const BorderSide(color: AppColors.borderLight),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(14),
-                                borderSide: const BorderSide(color: AppColors.primary),
-                              ),
-                              filled: true,
-                              fillColor: Colors.white,
-                            ),
-                            items: companies.map((c) {
-                              return DropdownMenuItem<int>(
-                                value: c.id,
-                                child: Text(
-                                  c.name,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 14,
-                                    color: AppColors.textPrimary,
+                          ? const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(16.0),
+                                child: SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
                                   ),
                                 ),
-                              );
-                            }).toList(),
-                            onChanged: (val) {
-                              setState(() {
-                                _selectedCompanyId = val;
-                              });
-                            },
-                            validator: (val) {
-                              if (val == null) {
-                                return 'Please select a company';
-                              }
-                              return null;
-                            },
-                          )
-                    : Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppColors.borderLight),
-                        ),
-                        child: companyProvider.isLoading && companies.isEmpty
-                            ? const Padding(
-                                padding: EdgeInsets.all(12.0),
-                                child: Center(
-                                  child: SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
-                                  ),
-                                ),
-                              )
-                            : Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 12.0),
-                                child: Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.apartment_rounded,
-                                      size: 18,
-                                      color: AppColors.primary,
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: Text(
-                                        companies.any(
-                                              (c) => c.id == _selectedCompanyId,
-                                            )
-                                            ? companies
-                                                  .firstWhere(
-                                                    (c) => c.id == _selectedCompanyId,
-                                                  )
-                                                  .name
-                                            : authProvider.user?.companyName ??
-                                                  'Unknown Company',
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                          color: AppColors.textPrimary,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
+                              ),
+                            )
+                          : DropdownButtonFormField<int>(
+                              value:
+                                  companies.any(
+                                    (c) => c.id == _selectedCompanyId,
+                                  )
+                                  ? _selectedCompanyId
+                                  : null,
+                              decoration: const InputDecoration(
+                                hintText: 'Select Marketing Company',
+                                prefixIcon: Icon(
+                                  Icons.apartment_rounded,
+                                  size: 20,
                                 ),
                               ),
+                              items: companies.map((c) {
+                                return DropdownMenuItem<int>(
+                                  value: c.id,
+                                  child: Text(
+                                    c.name,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 14,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                              onChanged: (val) {
+                                setState(() {
+                                  _selectedCompanyId = val;
+                                });
+                              },
+                              validator: (val) {
+                                if (val == null) {
+                                  return 'Please select a company';
+                                }
+                                return null;
+                              },
+                            )
+                    : companyProvider.isLoading && companies.isEmpty
+                    ? const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                      )
+                    : InputDecorator(
+                        decoration: const InputDecoration(
+                          labelText: 'Marketing Company',
+                          prefixIcon: Icon(Icons.apartment_rounded, size: 20),
+                          enabled: false,
+                        ),
+                        child: Text(
+                          companies.any((c) => c.id == _selectedCompanyId)
+                              ? companies
+                                    .firstWhere(
+                                      (c) => c.id == _selectedCompanyId,
+                                    )
+                                    .name
+                              : authProvider.user?.companyName ??
+                                    'Unknown Company',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
                       ),
                 const SizedBox(height: 24),
               ],
@@ -648,8 +565,8 @@ class _AddEditUserPageState extends State<AddEditUserPage> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.borderLight),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.border),
                 ),
                 child: projects.isEmpty
                     ? Text(
@@ -714,8 +631,8 @@ class _AddEditUserPageState extends State<AddEditUserPage> {
                 ),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.borderLight),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.border),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -764,7 +681,7 @@ class _AddEditUserPageState extends State<AddEditUserPage> {
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     elevation: 0,
                   ),
@@ -795,16 +712,30 @@ class _AddEditUserPageState extends State<AddEditUserPage> {
   }
 
   Widget _buildSectionHeader(String title, IconData icon) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 18, color: AppColors.primary),
-        const SizedBox(width: 8),
-        Text(
-          title,
-          style: GoogleFonts.poppins(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
+        Row(
+          children: [
+            Icon(icon, size: 18, color: AppColors.primary),
+            const SizedBox(width: 8),
+            Text(
+              title,
+              style: GoogleFonts.poppins(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Container(
+          width: 24,
+          height: 3,
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: 0.3),
+            borderRadius: BorderRadius.circular(1.5),
           ),
         ),
       ],
