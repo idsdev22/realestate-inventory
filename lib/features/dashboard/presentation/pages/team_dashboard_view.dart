@@ -148,11 +148,18 @@ class _TeamDashboardViewState extends State<TeamDashboardView> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: MetricCard(
-                            title: 'Blocked',
-                            value: dashboardData?.inventory.blocked.toString() ?? '0',
-                            dotColor: AppColors.blocked,
+                            title: 'Registered',
+                            value: dashboardData != null && dashboardData.inventory.registered > 0
+                                ? dashboardData.inventory.registered.toString()
+                                : dashboardData?.inventory.total != null && dashboardData!.inventory.total > 0
+                                ? (dashboardData.inventory.total -
+                                           dashboardData.inventory.available -
+                                           dashboardData.inventory.booked -
+                                           dashboardData.inventory.onHold).clamp(0, 999999).toString()
+                                : '0',
+                            dotColor: AppColors.registered,
                             onTap: () {
-                              inventoryProvider.setStatusFilter('Blocked');
+                              inventoryProvider.setStatusFilter('Registered');
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(builder: (_) => const InventoryListPage()),
@@ -182,13 +189,11 @@ class _TeamDashboardViewState extends State<TeamDashboardView> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: MetricCard(
-                            title: 'Registered',
-                            value: dashboardData?.inventory.total != null 
-                              ? (dashboardData!.inventory.total - dashboardData.inventory.available - dashboardData.inventory.blocked - dashboardData.inventory.booked).toString() 
-                              : '0',
-                            dotColor: AppColors.registered,
+                            title: 'On Hold',
+                            value: dashboardData?.inventory.onHold.toString() ?? '0',
+                            dotColor: AppColors.onHold,
                             onTap: () {
-                              inventoryProvider.setStatusFilter('Registered');
+                              inventoryProvider.setStatusFilter('On Hold');
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(builder: (_) => const InventoryListPage()),

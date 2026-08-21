@@ -335,12 +335,14 @@ class _InventoryListPageState extends State<InventoryListPage> {
                       const SizedBox(width: 8),
                       _buildFilterChip(
                         context,
-                        label: 'Blocked (${inventoryProvider.countBlocked})',
-                        status: 'Blocked',
+                        label:
+                            'Registered (${inventoryProvider.countRegistered})',
+                        status: 'Registered',
                         isSelected:
-                            inventoryProvider.selectedStatusFilter == 'Blocked',
-                        activeBgColor: const Color(0xFFFEF3E2),
-                        activeTextColor: AppColors.blocked,
+                            inventoryProvider.selectedStatusFilter ==
+                            'Registered',
+                        activeBgColor: AppColors.registeredLight,
+                        activeTextColor: AppColors.registered,
                       ),
                       const SizedBox(width: 8),
                       _buildFilterChip(
@@ -351,6 +353,16 @@ class _InventoryListPageState extends State<InventoryListPage> {
                             inventoryProvider.selectedStatusFilter == 'Booked',
                         activeBgColor: const Color(0xFFEBF3FE),
                         activeTextColor: AppColors.booked,
+                      ),
+                      const SizedBox(width: 8),
+                      _buildFilterChip(
+                        context,
+                        label: 'On Hold (${inventoryProvider.countOnHold})',
+                        status: 'On Hold',
+                        isSelected:
+                            inventoryProvider.selectedStatusFilter == 'On Hold',
+                        activeBgColor: AppColors.onHoldLight,
+                        activeTextColor: AppColors.onHold,
                       ),
                     ],
                   ),
@@ -798,15 +810,24 @@ class _InventoryListPageState extends State<InventoryListPage> {
   }
 
   Widget _buildCoverImage(String imageUrl) {
-    if (imageUrl.startsWith('data:image')) {
+    final cleanUrl = ProjectModel.sanitizeImage(imageUrl) ?? imageUrl;
+
+    if (cleanUrl.contains('data:image') || cleanUrl.contains(';base64,')) {
       try {
-        final commaIndex = imageUrl.indexOf(',');
+        final commaIndex = cleanUrl.indexOf(',');
         final base64Data = commaIndex != -1
-            ? imageUrl.substring(commaIndex + 1)
-            : imageUrl;
-        final bytes = base64Decode(base64Data);
+            ? cleanUrl.substring(commaIndex + 1)
+            : cleanUrl;
+        String cleanBase64 = base64Data.replaceAll(RegExp(r'\s+'), '');
+        if (cleanBase64.contains('%')) {
+          cleanBase64 = Uri.decodeComponent(cleanBase64);
+        }
+        int padding = cleanBase64.length % 4;
+        if (padding > 0) {
+          cleanBase64 += '=' * (4 - padding);
+        }
         return Image.memory(
-          bytes,
+          base64Decode(cleanBase64),
           width: double.infinity,
           height: double.infinity,
           fit: BoxFit.cover,
@@ -817,7 +838,7 @@ class _InventoryListPageState extends State<InventoryListPage> {
       }
     }
     return Image.network(
-      imageUrl,
+      cleanUrl,
       width: double.infinity,
       height: double.infinity,
       fit: BoxFit.cover,

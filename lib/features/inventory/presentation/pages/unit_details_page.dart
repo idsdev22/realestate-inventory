@@ -142,10 +142,7 @@ class UnitDetailsPage extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 18),
-                        Container(
-                          height: 1,
-                          color: AppColors.borderLight,
-                        ),
+                        Container(height: 1, color: AppColors.borderLight),
                         const SizedBox(height: 16),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -290,7 +287,9 @@ class UnitDetailsPage extends StatelessWidget {
                         ),
                         if (liveUnit.isPremium) ...[
                           const Divider(
-                              height: 22, color: AppColors.borderLight),
+                            height: 22,
+                            color: AppColors.borderLight,
+                          ),
                           _buildDetailRow('Premium Plot', 'Yes (Premium)'),
                         ],
                         const Divider(height: 22, color: AppColors.borderLight),
@@ -302,10 +301,48 @@ class UnitDetailsPage extends StatelessWidget {
                               ? liveUnit.approvalDetails!
                               : 'DTCP Approved',
                         ),
+                        if (liveUnit.customerName != null &&
+                            liveUnit.customerName!.trim().isNotEmpty) ...[
+                          const Divider(
+                            height: 22,
+                            color: AppColors.borderLight,
+                          ),
+                          _buildDetailRow(
+                            liveUnit.status.toLowerCase() == 'booked'
+                                ? 'Booked For'
+                                : 'Customer Name',
+                            liveUnit.customerName!,
+                            isBold: true,
+                          ),
+                        ],
+                        if (liveUnit.expectedBookingDate != null &&
+                            liveUnit.expectedBookingDate!.trim().isNotEmpty) ...[
+                          const Divider(
+                            height: 22,
+                            color: AppColors.borderLight,
+                          ),
+                          _buildDetailRow(
+                            'Expected Booking Date',
+                            liveUnit.expectedBookingDate!,
+                          ),
+                        ],
+                        if (liveUnit.customerPhone != null &&
+                            liveUnit.customerPhone!.trim().isNotEmpty) ...[
+                          const Divider(
+                            height: 22,
+                            color: AppColors.borderLight,
+                          ),
+                          _buildDetailRow(
+                            'Customer Phone',
+                            liveUnit.customerPhone!,
+                          ),
+                        ],
                         if (liveUnit.remarks != null &&
                             liveUnit.remarks!.trim().isNotEmpty) ...[
                           const Divider(
-                              height: 22, color: AppColors.borderLight),
+                            height: 22,
+                            color: AppColors.borderLight,
+                          ),
                           _buildDetailRow('Remarks', liveUnit.remarks!),
                         ],
                       ],
@@ -371,8 +408,10 @@ class UnitDetailsPage extends StatelessWidget {
                     Expanded(
                       flex: 3,
                       child: ElevatedButton(
-                        onPressed: liveUnit.status == 'Booked' ||
-                                liveUnit.status == 'Registered'
+                        onPressed:
+                            liveUnit.status.toLowerCase() == 'booked' ||
+                            liveUnit.status.toLowerCase() == 'approved' ||
+                            liveUnit.status.toLowerCase() == 'registered'
                             ? null
                             : () {
                                 Navigator.push(
@@ -393,9 +432,12 @@ class UnitDetailsPage extends StatelessWidget {
                           elevation: 0,
                         ),
                         child: Text(
-                          liveUnit.status == 'Blocked'
-                              ? 'Re-Request Block'
-                              : 'Request to Block',
+                          liveUnit.status.toLowerCase() == 'booked' ||
+                                  liveUnit.status.toLowerCase() == 'approved'
+                              ? 'Booked'
+                              : liveUnit.status.toLowerCase() == 'registered'
+                              ? 'Registered'
+                              : 'Request to Book',
                           style: GoogleFonts.poppins(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,

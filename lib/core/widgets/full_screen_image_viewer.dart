@@ -151,19 +151,44 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer>
   }
 
   Widget _buildImageWidget() {
-    final isBase64 = widget.imageUrl.startsWith('data:image');
+    final rawUrl = widget.imageUrl;
+    String cleanUrl = rawUrl.trim();
+
+    if (cleanUrl.contains('data:image') || cleanUrl.contains(';base64,')) {
+      final dataIndex = cleanUrl.indexOf('data:image');
+      if (dataIndex != -1) {
+        cleanUrl = cleanUrl.substring(dataIndex);
+      } else {
+        final b64Index = cleanUrl.indexOf(';base64,');
+        if (b64Index != -1) {
+          final dIndex = cleanUrl.lastIndexOf('data:', b64Index);
+          if (dIndex != -1) {
+            cleanUrl = cleanUrl.substring(dIndex);
+          }
+        }
+      }
+    }
+
+    final isBase64 = cleanUrl.contains('data:image') || cleanUrl.contains('base64,');
 
     Widget imageContent;
 
     if (isBase64) {
       try {
-        final commaIndex = widget.imageUrl.indexOf(',');
-        final base64Data = commaIndex != -1
-            ? widget.imageUrl.substring(commaIndex + 1)
-            : widget.imageUrl;
-        final bytes = base64Decode(base64Data);
+        final commaIndex = cleanUrl.indexOf(',');
+        final base64String = commaIndex != -1
+            ? cleanUrl.substring(commaIndex + 1)
+            : cleanUrl;
+        String cleanBase64 = base64String.replaceAll(RegExp(r'\s+'), '');
+        if (cleanBase64.contains('%')) {
+          cleanBase64 = Uri.decodeComponent(cleanBase64);
+        }
+        int padding = cleanBase64.length % 4;
+        if (padding > 0) {
+          cleanBase64 += '=' * (4 - padding);
+        }
         imageContent = Image.memory(
-          bytes,
+          base64Decode(cleanBase64),
           fit: BoxFit.contain,
           errorBuilder: (context, error, stackTrace) => _buildErrorWidget(),
         );
@@ -172,7 +197,7 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer>
       }
     } else {
       imageContent = Image.network(
-        widget.imageUrl,
+        cleanUrl,
         fit: BoxFit.contain,
         loadingBuilder: (context, child, loadingProgress) {
           if (loadingProgress == null) return child;

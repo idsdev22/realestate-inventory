@@ -26,6 +26,26 @@ class UnitCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final statusLower = unit.status.toLowerCase().trim();
+    final isBooked = statusLower == 'booked' || statusLower == 'approved';
+    final hasBookingRequest =
+        unit.hasBookingRequest ||
+        (unit.customerName != null &&
+            unit.customerName!.trim().isNotEmpty &&
+            (statusLower == 'available' ||
+                statusLower == 'on_hold' ||
+                statusLower == 'on hold'));
+
+    // Status to display in top badge
+    final displayStatus = isBooked
+        ? 'Booked'
+        : (hasBookingRequest ||
+              statusLower == 'available' ||
+              statusLower == 'on_hold' ||
+              statusLower == 'on hold')
+        ? 'Available'
+        : unit.status;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -81,14 +101,14 @@ class UnitCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  Row(children: [SyncrBadge.fromStatus(unit.status)]),
+                  Row(children: [SyncrBadge.fromStatus(displayStatus)]),
                 ],
               ),
               const SizedBox(height: 10),
 
               // Middle Row: Specs
               Text(
-                '${unit.areaSqFt} sq.ft  •  ${unit.facing}',
+                '${unit.areaSqFt} sq.ft  •  ${unit.facing ?? 'East Facing'}',
                 style: GoogleFonts.poppins(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
@@ -104,6 +124,160 @@ class UnitCard extends StatelessWidget {
                   color: AppColors.textMuted,
                 ),
               ),
+
+              // Request to Book Information Card (When Available with Request)
+              if (hasBookingRequest && !isBooked) ...[
+                const SizedBox(height: 10),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFFBEB), // Warm amber tint
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: const Color(0xFFFDE68A),
+                      width: 1,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.bookmark_added_outlined,
+                            size: 14,
+                            color: Color(0xFFD97706),
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            'Request to Book',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFFB45309),
+                            ),
+                          ),
+                          if (unit.expectedBookingDate != null &&
+                              unit.expectedBookingDate!.trim().isNotEmpty) ...[
+                            const Spacer(),
+                            const Icon(
+                              Icons.event_outlined,
+                              size: 12,
+                              color: Color(0xFFB45309),
+                            ),
+                            const SizedBox(width: 3),
+                            Text(
+                              unit.expectedBookingDate!,
+                              style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: const Color(0xFFB45309),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      if (unit.customerName != null &&
+                          unit.customerName!.trim().isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.person_outline_rounded,
+                              size: 13,
+                              color: AppColors.textSecondary,
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: RichText(
+                                text: TextSpan(
+                                  text: 'Customer: ',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 12,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                  children: [
+                                    TextSpan(
+                                      text: unit.customerName!,
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+
+              // Booked Customer Information (When Booked)
+              if (isBooked &&
+                  unit.customerName != null &&
+                  unit.customerName!.trim().isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF), // Soft blue tint
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: const Color(0xFFBFDBFE),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.check_circle_outline_rounded,
+                        size: 14,
+                        color: Color(0xFF2563EB),
+                      ),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        child: RichText(
+                          text: TextSpan(
+                            text: 'Booked for: ',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: const Color(0xFF1E40AF),
+                            ),
+                            children: [
+                              TextSpan(
+                                text: unit.customerName!,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF1E3A8A),
+                                ),
+                              ),
+                            ],
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
               const SizedBox(height: 12),
 
               // Bottom Row: Price & Action

@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:realestate_inventory/features/inventory/data/models/unit_model.dart';
 import 'package:realestate_inventory/features/projects/data/models/project_model.dart';
 import 'package:realestate_inventory/features/projects/data/services/project_service.dart';
@@ -153,7 +154,21 @@ class InventoryProvider extends ChangeNotifier {
 
       // Status filter
       if (_selectedStatusFilter != 'All') {
-        if (unit.status.toLowerCase() != _selectedStatusFilter.toLowerCase()) {
+        final filterLower = _selectedStatusFilter.toLowerCase().trim();
+        final unitLower = unit.status.toLowerCase().trim();
+        if (filterLower == 'available') {
+          if (unitLower != 'available' && unitLower != 'on_hold' && unitLower != 'on hold') {
+            return false;
+          }
+        } else if (filterLower == 'booked') {
+          if (unitLower != 'booked' && unitLower != 'approved') {
+            return false;
+          }
+        } else if (filterLower == 'on hold' || filterLower == 'on_hold') {
+          if (unitLower != 'on_hold' && unitLower != 'on hold' && unitLower != 'hold' && unitLower != 'blocked') {
+            return false;
+          }
+        } else if (unitLower != filterLower) {
           return false;
         }
       }
@@ -199,18 +214,22 @@ class InventoryProvider extends ChangeNotifier {
   // Counts for selected project or all projects
   int get countAll => _getFilteredCount(null);
   int get countAvailable => _getFilteredCount('Available');
-  int get countBlocked => _getFilteredCount('Blocked');
-  int get countBooked => _getFilteredCount('Booked');
   int get countRegistered => _getFilteredCount('Registered');
+  int get countBooked => _getFilteredCount('Booked');
+  int get countOnHold => _getFilteredCount('On Hold');
 
   int get totalInventoryCount => _units.length;
   int get totalAvailableCount =>
-      _units.where((u) => u.status == 'Available').length;
-  int get totalBlockedCount =>
-      _units.where((u) => u.status == 'Blocked').length;
-  int get totalBookedCount => _units.where((u) => u.status == 'Booked').length;
+      _units.where((u) => u.status.toLowerCase() == 'available').length;
   int get totalRegisteredCount =>
-      _units.where((u) => u.status == 'Registered').length;
+      _units.where((u) => u.status.toLowerCase() == 'registered').length;
+  int get totalBookedCount =>
+      _units.where((u) => u.status.toLowerCase() == 'booked').length;
+  int get totalOnHoldCount =>
+      _units.where((u) {
+        final s = u.status.toLowerCase().trim();
+        return s == 'on_hold' || s == 'on hold' || s == 'hold' || s == 'blocked';
+      }).length;
 
   int _getFilteredCount(String? status) {
     final matchingUnits = _units.where((unit) {
@@ -218,7 +237,18 @@ class InventoryProvider extends ChangeNotifier {
         if (unit.projectId != _selectedProjectId) return false;
       }
       if (status == null) return true;
-      return unit.status.toLowerCase() == status.toLowerCase();
+      final statusLower = status.toLowerCase().trim();
+      final unitLower = unit.status.toLowerCase().trim();
+      if (statusLower == 'available') {
+        return unitLower == 'available' || unitLower == 'on_hold' || unitLower == 'on hold';
+      }
+      if (statusLower == 'booked') {
+        return unitLower == 'booked' || unitLower == 'approved';
+      }
+      if (statusLower == 'on hold' || statusLower == 'on_hold') {
+        return unitLower == 'on_hold' || unitLower == 'on hold' || unitLower == 'hold' || unitLower == 'blocked';
+      }
+      return unitLower == statusLower;
     }).length;
 
     // Fallback to project metadata if units haven't loaded into provider memory yet
@@ -228,9 +258,9 @@ class InventoryProvider extends ChangeNotifier {
         if (status == null) return proj.totalUnits;
         final s = status.toLowerCase();
         if (s == 'available') return proj.availableUnits;
-        if (s == 'blocked') return proj.blockedUnits;
         if (s == 'booked') return proj.bookedUnits;
         if (s == 'registered') return proj.registeredUnits;
+        if (s == 'on hold' || s == 'on_hold') return 0;
       }
     }
 
@@ -430,12 +460,15 @@ class InventoryProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> addProject(ProjectModel project) async {
+  Future<bool> addProject(ProjectModel project, {XFile? imageFile}) async {
     if (_projectService != null) {
       _isLoading = true;
       notifyListeners();
       try {
-        final createdProject = await _projectService.createProject(project);
+        final createdProject = await _projectService.createProject(
+          project,
+          imageFile: imageFile,
+        );
         if (createdProject != null) {
           _projects.insert(0, createdProject);
           _isLoading = false;
@@ -455,12 +488,20 @@ class InventoryProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> updateProject(int id, ProjectModel project) async {
+  Future<bool> updateProject(
+    int id,
+    ProjectModel project, {
+    XFile? imageFile,
+  }) async {
     if (_projectService != null) {
       _isLoading = true;
       notifyListeners();
       try {
-        final updatedProject = await _projectService.updateProject(id, project);
+        final updatedProject = await _projectService.updateProject(
+          id,
+          project,
+          imageFile: imageFile,
+        );
         final projToSave = updatedProject ?? project;
         final index = _projects.indexWhere((p) => p.id == id);
         if (index != -1) {
@@ -524,7 +565,6 @@ class InventoryProvider extends ChangeNotifier {
       final projUnits = _units.where((u) => u.projectId == projectId).toList();
       final total = projUnits.length;
       final available = projUnits.where((u) => u.status == 'Available').length;
-      final blocked = projUnits.where((u) => u.status == 'Blocked').length;
       final booked = projUnits.where((u) => u.status == 'Booked').length;
       final registered = projUnits
           .where((u) => u.status == 'Registered')
@@ -533,7 +573,6 @@ class InventoryProvider extends ChangeNotifier {
       _projects[projectIndex] = _projects[projectIndex].copyWith(
         totalUnits: total > 0 ? total : _projects[projectIndex].totalUnits,
         availableUnits: available,
-        blockedUnits: blocked,
         bookedUnits: booked,
         registeredUnits: registered,
       );

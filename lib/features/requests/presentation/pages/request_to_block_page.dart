@@ -110,11 +110,20 @@ class _RequestToBlockPageState extends State<RequestToBlockPage> {
       });
 
       if (success) {
-        // Update unit status locally to keep UI responsive
+        // Keep unit status as Available while marking active booking request
         inventoryProvider.updateUnit(
           widget.unit.copyWith(
-            status: 'Blocked',
-            remarks: 'Blocked for ${_nameController.text.trim()}',
+            status: 'Available',
+            hasBookingRequest: true,
+            customerName: _nameController.text.trim(),
+            customerPhone: _phoneController.text.trim(),
+            customerEmail: _emailController.text.trim().isNotEmpty
+                ? _emailController.text.trim()
+                : null,
+            expectedBookingDate: _dateController.text.trim(),
+            remarks: _remarksController.text.trim().isNotEmpty
+                ? _remarksController.text.trim()
+                : 'Booking requested for ${_nameController.text.trim()}',
           ),
         );
 
@@ -127,7 +136,7 @@ class _RequestToBlockPageState extends State<RequestToBlockPage> {
           SnackBar(
             backgroundColor: AppColors.available,
             content: Text(
-              'Block request submitted for unit ${widget.unit.unitNo}!',
+              'Booking request submitted for unit ${widget.unit.unitNo}!',
             ),
           ),
         );
@@ -162,7 +171,7 @@ class _RequestToBlockPageState extends State<RequestToBlockPage> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Request to Block',
+          'Request to Book',
           style: GoogleFonts.poppins(
             fontSize: 18,
             fontWeight: FontWeight.w600,

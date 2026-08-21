@@ -4,9 +4,9 @@ import '../theme/app_theme.dart';
 
 enum SyncrBadgeType {
   available,
-  blocked,
   booked,
   registered,
+  onHold,
   pending,
   approved,
   rejected,
@@ -38,29 +38,39 @@ class SyncrBadge extends StatelessWidget {
   factory SyncrBadge.fromStatus(String status, {bool showDot = false}) {
     final lower = status.toLowerCase().trim();
     SyncrBadgeType badgeType = SyncrBadgeType.custom;
+    String displayLabel = status;
 
     if (lower == 'available') {
       badgeType = SyncrBadgeType.available;
-    } else if (lower == 'blocked') {
-      badgeType = SyncrBadgeType.blocked;
+      displayLabel = 'Available';
     } else if (lower == 'booked') {
       badgeType = SyncrBadgeType.booked;
+      displayLabel = 'Booked';
     } else if (lower == 'registered') {
       badgeType = SyncrBadgeType.registered;
+      displayLabel = 'Registered';
+    } else if (lower == 'on_hold' || lower == 'on hold' || lower == 'onhold' || lower == 'hold' || lower == 'blocked') {
+      badgeType = SyncrBadgeType.onHold;
+      displayLabel = 'On Hold';
     } else if (lower == 'pending') {
       badgeType = SyncrBadgeType.pending;
+      displayLabel = 'Pending';
     } else if (lower == 'approved') {
       badgeType = SyncrBadgeType.approved;
+      displayLabel = 'Booked';
     } else if (lower == 'rejected') {
       badgeType = SyncrBadgeType.rejected;
+      displayLabel = 'Rejected';
     } else if (lower == 'active') {
       badgeType = SyncrBadgeType.active;
+      displayLabel = 'Active';
     } else if (lower == 'inactive') {
       badgeType = SyncrBadgeType.inactive;
+      displayLabel = 'Inactive';
     }
 
     return SyncrBadge(
-      label: status,
+      label: displayLabel,
       type: badgeType,
       showDot: showDot,
     );
@@ -73,7 +83,7 @@ class SyncrBadge extends StatelessWidget {
       case SyncrBadgeType.active:
       case SyncrBadgeType.approved:
         return const Color(0xFFE8F8F0);
-      case SyncrBadgeType.blocked:
+      case SyncrBadgeType.onHold:
       case SyncrBadgeType.pending:
         return const Color(0xFFFEF3E2);
       case SyncrBadgeType.booked:
@@ -95,7 +105,7 @@ class SyncrBadge extends StatelessWidget {
       case SyncrBadgeType.active:
       case SyncrBadgeType.approved:
         return const Color(0xFF10B981);
-      case SyncrBadgeType.blocked:
+      case SyncrBadgeType.onHold:
       case SyncrBadgeType.pending:
         return const Color(0xFFF59E0B);
       case SyncrBadgeType.booked:

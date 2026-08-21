@@ -25,8 +25,9 @@ class AllRequestsProvider extends ChangeNotifier {
   // Counts based on current loaded list. This might not reflect total count on server.
   int get countAll => _requests.length;
   int get countPending => _requests.where((r) => r.status.toLowerCase() == 'pending').length;
-  int get countApproved => _requests.where((r) => r.status.toLowerCase() == 'approved').length;
+  int get countBooked => _requests.where((r) => r.status.toLowerCase() == 'booked' || r.status.toLowerCase() == 'approved').length;
   int get countRejected => _requests.where((r) => r.status.toLowerCase() == 'rejected').length;
+  int get countOnHold => _requests.where((r) => r.status.toLowerCase() == 'on_hold' || r.status.toLowerCase() == 'on hold').length;
 
   void setSelectedTab(String tab) {
     if (_selectedTab != tab) {
@@ -49,7 +50,14 @@ class AllRequestsProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final statusParam = _selectedTab == 'All' ? '' : _selectedTab.toLowerCase();
+      String statusParam = '';
+      if (_selectedTab != 'All') {
+        if (_selectedTab.toLowerCase() == 'booked') {
+          statusParam = 'approved';
+        } else {
+          statusParam = _selectedTab.toLowerCase();
+        }
+      }
       final newRequests = await _requestService.getRequests(
         status: statusParam,
         page: _currentPage,
@@ -86,9 +94,10 @@ class AllRequestsProvider extends ChangeNotifier {
         decision: decision,
         reviewNotes: reviewNotes,
       );
+      final finalStatus = decision.toLowerCase() == 'approved' ? 'Booked' : decision.toLowerCase() == 'rejected' ? 'Rejected' : reviewed.status;
       final index = _requests.indexWhere((r) => r.id == id);
       if (index != -1) {
-        _requests[index] = reviewed;
+        _requests[index] = reviewed.copyWith(status: finalStatus);
       }
       return true;
     } on ApiException catch (e) {

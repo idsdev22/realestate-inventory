@@ -6,11 +6,33 @@ import '../../../../core/widgets/syncr_badge.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import 'package:realestate_inventory/features/requests/data/models/block_request_model.dart';
 import '../providers/requests_provider.dart';
+import '../../../inventory/presentation/providers/inventory_provider.dart';
 
-class MyRequestsPage extends StatelessWidget {
+class MyRequestsPage extends StatefulWidget {
   const MyRequestsPage({super.key});
 
-  void _showRequestDetailsModal(BuildContext context, BlockRequestModel request) {
+  @override
+  State<MyRequestsPage> createState() => _MyRequestsPageState();
+}
+
+class _MyRequestsPageState extends State<MyRequestsPage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authProvider = context.read<AuthProvider>();
+      final userId = authProvider.user?.id;
+      context.read<RequestsProvider>().fetchRequests(
+        refresh: true,
+        userId: userId,
+      );
+    });
+  }
+
+  void _showRequestDetailsModal(
+    BuildContext context,
+    BlockRequestModel request,
+  ) {
     final authProvider = context.read<AuthProvider>();
     final requestsProvider = context.read<RequestsProvider>();
     final isPromoterAdmin = authProvider.isPromoterAdmin;
@@ -56,7 +78,10 @@ class MyRequestsPage extends StatelessWidget {
             const SizedBox(height: 16),
             _buildModalRow('Unit No.', request.unitNo),
             _buildModalRow('Project', request.projectName),
-            _buildModalRow('Dimensions / Area', '${request.areaSqFt} sq.ft (${request.facing})'),
+            _buildModalRow(
+              'Dimensions / Area',
+              '${request.areaSqFt} sq.ft (${request.facing})',
+            ),
             _buildModalRow('Road Width', request.roadWidth),
             _buildModalRow('Price', request.formattedPrice),
             const Divider(height: 24, color: AppColors.borderLight),
@@ -97,11 +122,34 @@ class MyRequestsPage extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: () {
                         requestsProvider.reviewRequest(request.id, 'Approved');
+                        // Update unit in InventoryProvider to Booked
+                        final invProvider = context.read<InventoryProvider>();
+                        final unitIndex = invProvider.units.indexWhere(
+                          (u) =>
+                              u.unitNo.toLowerCase() ==
+                                  request.unitNo.toLowerCase() ||
+                              u.id.toString() == request.id,
+                        );
+                        if (unitIndex != -1) {
+                          final unit = invProvider.units[unitIndex];
+                          invProvider.updateUnit(
+                            unit.copyWith(
+                              status: 'Booked',
+                              hasBookingRequest: false,
+                              customerName: request.customerName,
+                              customerPhone: request.customerPhone,
+                              customerEmail: request.customerEmail,
+                              expectedBookingDate: request.expectedBookingDate,
+                            ),
+                          );
+                        }
                         Navigator.pop(ctx);
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             backgroundColor: AppColors.available,
-                            content: Text('Request approved successfully!'),
+                            content: Text(
+                              'Request accepted and marked as Booked!',
+                            ),
                           ),
                         );
                       },
@@ -112,7 +160,7 @@ class MyRequestsPage extends StatelessWidget {
                         elevation: 0,
                       ),
                       child: Text(
-                        'Approve',
+                        'Approve & Book',
                         style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
                       ),
                     ),
@@ -142,7 +190,10 @@ class MyRequestsPage extends StatelessWidget {
         children: [
           Text(
             label,
-            style: GoogleFonts.poppins(fontSize: 13, color: AppColors.textSecondary),
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              color: AppColors.textSecondary,
+            ),
           ),
           Flexible(
             child: Text(
@@ -175,12 +226,18 @@ class MyRequestsPage extends StatelessWidget {
         leading: isRoot
             ? Builder(
                 builder: (ctx) => IconButton(
-                  icon: const Icon(Icons.menu_rounded, color: AppColors.textPrimary),
+                  icon: const Icon(
+                    Icons.menu_rounded,
+                    color: AppColors.textPrimary,
+                  ),
                   onPressed: () => Scaffold.of(ctx).openDrawer(),
                 ),
               )
             : IconButton(
-                icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+                icon: const Icon(
+                  Icons.arrow_back_rounded,
+                  color: AppColors.textPrimary,
+                ),
                 onPressed: () => Navigator.pop(context),
               ),
         title: Text(
@@ -219,10 +276,10 @@ class MyRequestsPage extends StatelessWidget {
                   const SizedBox(width: 8),
                   _buildTab(
                     context,
-                    label: 'Approved (${requestsProvider.countApproved})',
-                    tab: 'Approved',
-                    isSelected: requestsProvider.selectedTab == 'Approved',
-                    activeColor: AppColors.available,
+                    label: 'Booked (${requestsProvider.countBooked})',
+                    tab: 'Booked',
+                    isSelected: requestsProvider.selectedTab == 'Booked',
+                    activeColor: AppColors.booked,
                   ),
                   const SizedBox(width: 8),
                   _buildTab(
@@ -232,6 +289,16 @@ class MyRequestsPage extends StatelessWidget {
                     isSelected: requestsProvider.selectedTab == 'Rejected',
                     activeColor: AppColors.rejected,
                   ),
+                  if (requestsProvider.countOnHold > 0) ...[
+                    const SizedBox(width: 8),
+                    _buildTab(
+                      context,
+                      label: 'On Hold (${requestsProvider.countOnHold})',
+                      tab: 'On Hold',
+                      isSelected: requestsProvider.selectedTab == 'On Hold',
+                      activeColor: AppColors.onHold,
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -270,7 +337,10 @@ class MyRequestsPage extends StatelessWidget {
                     ),
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20.0,
+                      vertical: 16.0,
+                    ),
                     itemCount: requests.length,
                     itemBuilder: (context, index) {
                       final req = requests[index];
@@ -299,7 +369,8 @@ class MyRequestsPage extends StatelessWidget {
                               children: [
                                 // Top Row: Unit No & Status Pill
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
                                       req.unitNo,
@@ -327,7 +398,13 @@ class MyRequestsPage extends StatelessWidget {
 
                                 // Date Info
                                 Text(
-                                  '${req.status == 'Pending' ? 'Request on' : req.status == 'Approved' ? 'Approved on' : 'Rejected on'} ${req.requestedDate}',
+                                  '${req.status == 'Pending'
+                                      ? 'Request on'
+                                      : req.status == 'Approved'
+                                      ? 'Approved on'
+                                      : req.status == 'Booked'
+                                      ? 'Booked on'
+                                      : 'Rejected on'} ${req.requestedDate}',
                                   style: GoogleFonts.poppins(
                                     fontSize: 12,
                                     color: AppColors.textMuted,
@@ -337,7 +414,8 @@ class MyRequestsPage extends StatelessWidget {
 
                                 // Customer Name & Chevron
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     RichText(
                                       text: TextSpan(
@@ -394,7 +472,9 @@ class MyRequestsPage extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected
-              ? (activeColor != null ? activeColor.withValues(alpha: 0.12) : AppColors.primary)
+              ? (activeColor != null
+                    ? activeColor.withValues(alpha: 0.12)
+                    : AppColors.primary)
               : AppColors.background,
           borderRadius: BorderRadius.circular(20),
         ),

@@ -5,7 +5,6 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/metric_card.dart';
 import '../../../../core/widgets/project_card.dart';
 import '../../../inventory/presentation/pages/inventory_list_page.dart';
-import '../../../inventory/presentation/pages/inventory_overview_page.dart';
 import '../../../inventory/presentation/providers/inventory_provider.dart';
 import '../providers/dashboard_provider.dart';
 
@@ -158,13 +157,18 @@ class _AdminDashboardViewState extends State<AdminDashboardView> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: MetricCard(
-                            title: 'Blocked',
-                            value:
-                                dashboardData?.inventory.blocked.toString() ??
-                                '0',
-                            dotColor: AppColors.blocked,
+                            title: 'Registered',
+                            value: dashboardData != null && dashboardData.inventory.registered > 0
+                                ? dashboardData.inventory.registered.toString()
+                                : dashboardData?.inventory.total != null && dashboardData!.inventory.total > 0
+                                ? (dashboardData.inventory.total -
+                                           dashboardData.inventory.available -
+                                           dashboardData.inventory.booked -
+                                           dashboardData.inventory.onHold).clamp(0, 999999).toString()
+                                : '0',
+                            dotColor: AppColors.registered,
                             onTap: () {
-                              inventoryProvider.setStatusFilter('Blocked');
+                              inventoryProvider.setStatusFilter('Registered');
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -200,17 +204,13 @@ class _AdminDashboardViewState extends State<AdminDashboardView> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: MetricCard(
-                            title: 'Registered',
-                            value: dashboardData?.inventory.total != null
-                                ? (dashboardData!.inventory.total -
-                                          dashboardData.inventory.available -
-                                          dashboardData.inventory.blocked -
-                                          dashboardData.inventory.booked)
-                                      .toString()
-                                : '0',
-                            dotColor: AppColors.registered,
+                            title: 'On Hold',
+                            value:
+                                dashboardData?.inventory.onHold.toString() ??
+                                '0',
+                            dotColor: AppColors.onHold,
                             onTap: () {
-                              inventoryProvider.setStatusFilter('Registered');
+                              inventoryProvider.setStatusFilter('On Hold');
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -218,70 +218,6 @@ class _AdminDashboardViewState extends State<AdminDashboardView> {
                                 ),
                               );
                             },
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: InkWell(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const InventoryOverviewPage(),
-                                ),
-                              );
-                            },
-                            borderRadius: BorderRadius.circular(16),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 14,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.primarySurface,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: AppColors.primaryLight,
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Overview',
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppColors.primary,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Full Analytics',
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 11,
-                                          color: AppColors.textSecondary,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const Icon(
-                                    Icons.arrow_forward_rounded,
-                                    color: AppColors.primary,
-                                    size: 20,
-                                  ),
-                                ],
-                              ),
-                            ),
                           ),
                         ),
                       ],

@@ -120,6 +120,65 @@ class ApiService {
     }
   }
 
+  Future<dynamic> postMultipart(
+    String endpoint, {
+    String method = 'POST',
+    Map<String, String>? fields,
+    List<http.MultipartFile>? files,
+    Map<String, String>? headers,
+  }) async {
+    final uri = Uri.parse('${ApiConstants.baseUrl}$endpoint');
+    AppLogger.i(
+      'MULTIPART $method Request: $uri\nFields: $fields\nFiles: ${files?.map((f) => f.field).toList()}',
+    );
+    try {
+      final request = http.MultipartRequest(
+        method.toUpperCase() == 'PUT' ? 'POST' : method,
+        uri,
+      );
+
+      final token = _storageService.getToken();
+      if (token != null && token.isNotEmpty) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
+      request.headers['Accept'] = 'application/json';
+      if (headers != null) {
+        request.headers.addAll(headers);
+      }
+
+      if (fields != null) {
+        request.fields.addAll(fields);
+      }
+      if (method.toUpperCase() == 'PUT') {
+        request.fields['_method'] = 'PUT';
+      }
+      if (files != null) {
+        request.files.addAll(files);
+      }
+
+      final streamedResponse = await _client
+          .send(request)
+          .timeout(ApiConstants.timeout);
+      final response = await http.Response.fromStream(streamedResponse);
+
+      AppLogger.d('MULTIPART $method Response [${response.statusCode}]: $uri');
+      return _handleResponse(response, endpoint: endpoint);
+    } on SocketException catch (e) {
+      AppLogger.e('Network error for MULTIPART $endpoint', e);
+      throw ApiException(
+        message:
+            'No internet connection. Please check your network and try again.',
+      );
+    } on http.ClientException catch (e) {
+      AppLogger.e('ClientException for MULTIPART $endpoint', e);
+      throw ApiException(message: 'Unable to connect to server: ${e.message}');
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      AppLogger.e('Exception for MULTIPART $endpoint', e);
+      throw ApiException(message: 'Unexpected error: $e');
+    }
+  }
+
   Future<dynamic> delete(
     String endpoint, {
     Map<String, String>? headers,
@@ -184,14 +243,17 @@ class ApiService {
           extractedMessage = responseData['message'];
         } else if (responseData['error'] != null) {
           if (responseData['error'] is Map) {
-            extractedMessage = responseData['error']['message'] ?? responseData['error'];
+            extractedMessage =
+                responseData['error']['message'] ?? responseData['error'];
           } else {
             extractedMessage = responseData['error'];
           }
         }
       }
 
-      final message = extractedMessage ?? 'Request failed with status ${response.statusCode}';
+      final message =
+          extractedMessage ??
+          'Request failed with status ${response.statusCode}';
 
       AppLogger.w('API Error ($endpoint) [${response.statusCode}]: $message');
       throw ApiException(

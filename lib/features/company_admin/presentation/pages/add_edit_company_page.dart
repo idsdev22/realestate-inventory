@@ -47,7 +47,8 @@ class _AddEditCompanyPageState extends State<AddEditCompanyPage> {
 
     _status = company?.status ?? 'active';
     _selectedPermissions = Set<String>.from(
-      company?.permissions ?? ['view_inventory', 'submit_block_requests', 'manage_users'],
+      company?.permissions ??
+          ['view_inventory', 'submit_block_requests', 'manage_users'],
     );
     _selectedProjectIds = Set<int>.from(company?.projectIds ?? [1]);
 
@@ -76,7 +77,9 @@ class _AddEditCompanyPageState extends State<AddEditCompanyPage> {
     if (!auth.isPromoterAdmin) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Access Denied: Only Promoter Admins can manage companies.'),
+          content: Text(
+            'Access Denied: Only Promoter Admins can manage companies.',
+          ),
           backgroundColor: AppColors.rejected,
         ),
       );
@@ -89,7 +92,7 @@ class _AddEditCompanyPageState extends State<AddEditCompanyPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please select at least one assigned project.'),
-          backgroundColor: AppColors.blockedDark,
+          backgroundColor: AppColors.rejectedDark,
         ),
       );
       return;
@@ -111,7 +114,10 @@ class _AddEditCompanyPageState extends State<AddEditCompanyPage> {
     bool success;
 
     if (isEditing) {
-      success = await companyProvider.updateCompany(widget.company!.id!, companyModel);
+      success = await companyProvider.updateCompany(
+        widget.company!.id!,
+        companyModel,
+      );
     } else {
       success = await companyProvider.createCompany(companyModel);
     }
@@ -131,12 +137,10 @@ class _AddEditCompanyPageState extends State<AddEditCompanyPage> {
       );
       Navigator.pop(context, true);
     } else {
-      final error = companyProvider.errorMessage ?? 'Operation failed. Please try again.';
+      final error =
+          companyProvider.errorMessage ?? 'Operation failed. Please try again.';
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error),
-          backgroundColor: AppColors.rejected,
-        ),
+        SnackBar(content: Text(error), backgroundColor: AppColors.rejected),
       );
     }
   }
@@ -176,9 +180,16 @@ class _AddEditCompanyPageState extends State<AddEditCompanyPage> {
                     ? const SizedBox(
                         width: 16,
                         height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.primary,
+                        ),
                       )
-                    : const Icon(Icons.check_rounded, size: 18, color: AppColors.primary),
+                    : const Icon(
+                        Icons.check_rounded,
+                        size: 18,
+                        color: AppColors.primary,
+                      ),
                 label: Text(
                   isEditing ? 'Save' : 'Create',
                   style: GoogleFonts.poppins(
@@ -193,7 +204,10 @@ class _AddEditCompanyPageState extends State<AddEditCompanyPage> {
       body: !isPromoterAdmin
           ? _buildAccessRestrictedView()
           : SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20.0,
+                vertical: 16.0,
+              ),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -235,7 +249,8 @@ class _AddEditCompanyPageState extends State<AddEditCompanyPage> {
                                   if (val == null || val.trim().isEmpty) {
                                     return 'Please enter email';
                                   }
-                                  if (!val.contains('@') || !val.contains('.')) {
+                                  if (!val.contains('@') ||
+                                      !val.contains('.')) {
                                     return 'Enter a valid email';
                                   }
                                   return null;
@@ -304,7 +319,8 @@ class _AddEditCompanyPageState extends State<AddEditCompanyPage> {
                     // Section 2: Account Status
                     _buildSectionContainer(
                       title: 'Account Status',
-                      subtitle: 'Control whether this marketing agency can log in',
+                      subtitle:
+                          'Control whether this marketing agency can log in',
                       icon: Icons.toggle_on_rounded,
                       children: [
                         Row(
@@ -327,7 +343,8 @@ class _AddEditCompanyPageState extends State<AddEditCompanyPage> {
                                 isSelected: _status == 'inactive',
                                 color: AppColors.rejected,
                                 icon: Icons.cancel_rounded,
-                                onTap: () => setState(() => _status = 'inactive'),
+                                onTap: () =>
+                                    setState(() => _status = 'inactive'),
                               ),
                             ),
                           ],
@@ -339,7 +356,8 @@ class _AddEditCompanyPageState extends State<AddEditCompanyPage> {
                     // Section 3: Permissions Matrix
                     _buildSectionContainer(
                       title: 'Access Permissions',
-                      subtitle: 'Select specific operational capabilities for this company',
+                      subtitle:
+                          'Select specific operational capabilities for this company',
                       icon: Icons.shield_outlined,
                       children: [
                         ...CompanyModel.availablePermissions.map((perm) {
@@ -351,23 +369,31 @@ class _AddEditCompanyPageState extends State<AddEditCompanyPage> {
                           return Container(
                             margin: const EdgeInsets.only(bottom: 10),
                             decoration: BoxDecoration(
-                              color: isChecked ? AppColors.primarySurface : Colors.white,
+                              color: isChecked
+                                  ? AppColors.primarySurface
+                                  : Colors.white,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: isChecked ? AppColors.primary : AppColors.borderLight,
+                                color: isChecked
+                                    ? AppColors.primary
+                                    : AppColors.borderLight,
                                 width: isChecked ? 1.5 : 1,
                               ),
                             ),
                             child: CheckboxListTile(
                               value: isChecked,
                               activeColor: AppColors.primary,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                               title: Text(
                                 label,
                                 style: GoogleFonts.poppins(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
-                                  color: isChecked ? AppColors.primaryDark : AppColors.textPrimary,
+                                  color: isChecked
+                                      ? AppColors.primaryDark
+                                      : AppColors.textPrimary,
                                 ),
                               ),
                               subtitle: Text(
@@ -379,7 +405,9 @@ class _AddEditCompanyPageState extends State<AddEditCompanyPage> {
                               ),
                               secondary: Icon(
                                 _getPermissionIcon(key),
-                                color: isChecked ? AppColors.primary : AppColors.textMuted,
+                                color: isChecked
+                                    ? AppColors.primary
+                                    : AppColors.textMuted,
                                 size: 22,
                               ),
                               onChanged: (bool? val) {
@@ -401,7 +429,8 @@ class _AddEditCompanyPageState extends State<AddEditCompanyPage> {
                     // Section 4: Assign Projects
                     _buildSectionContainer(
                       title: 'Assigned Projects',
-                      subtitle: 'Allocate projects whose inventory this company can access',
+                      subtitle:
+                          'Allocate projects whose inventory this company can access',
                       icon: Icons.apartment_rounded,
                       children: [
                         // Search & Quick Select bar
@@ -413,13 +442,17 @@ class _AddEditCompanyPageState extends State<AddEditCompanyPage> {
                                 decoration: BoxDecoration(
                                   color: AppColors.background,
                                   borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: AppColors.borderLight),
+                                  border: Border.all(
+                                    color: AppColors.borderLight,
+                                  ),
                                 ),
                                 child: TextField(
                                   controller: _projectFilterController,
                                   onChanged: (val) {
                                     setState(() {
-                                      _projectSearchText = val.toLowerCase().trim();
+                                      _projectSearchText = val
+                                          .toLowerCase()
+                                          .trim();
                                     });
                                   },
                                   style: GoogleFonts.poppins(fontSize: 12.5),
@@ -434,12 +467,18 @@ class _AddEditCompanyPageState extends State<AddEditCompanyPage> {
                                       size: 18,
                                       color: AppColors.textMuted,
                                     ),
-                                    suffixIcon: _projectFilterController.text.isNotEmpty
+                                    suffixIcon:
+                                        _projectFilterController.text.isNotEmpty
                                         ? IconButton(
-                                            icon: const Icon(Icons.clear_rounded, size: 16),
+                                            icon: const Icon(
+                                              Icons.clear_rounded,
+                                              size: 16,
+                                            ),
                                             onPressed: () {
                                               _projectFilterController.clear();
-                                              setState(() => _projectSearchText = '');
+                                              setState(
+                                                () => _projectSearchText = '',
+                                              );
                                             },
                                           )
                                         : null,
@@ -457,19 +496,26 @@ class _AddEditCompanyPageState extends State<AddEditCompanyPage> {
                             TextButton(
                               onPressed: () {
                                 setState(() {
-                                  if (_selectedProjectIds.length == invProvider.projects.length) {
+                                  if (_selectedProjectIds.length ==
+                                      invProvider.projects.length) {
                                     _selectedProjectIds.clear();
                                   } else {
-                                    _selectedProjectIds = invProvider.projects.map((p) => p.id).toSet();
+                                    _selectedProjectIds = invProvider.projects
+                                        .map((p) => p.id)
+                                        .toSet();
                                   }
                                 });
                               },
                               style: TextButton.styleFrom(
                                 visualDensity: VisualDensity.compact,
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
                               ),
                               child: Text(
-                                _selectedProjectIds.length == invProvider.projects.length
+                                _selectedProjectIds.length ==
+                                        invProvider.projects.length
                                     ? 'Clear All'
                                     : 'Select All',
                                 style: GoogleFonts.poppins(
@@ -485,14 +531,21 @@ class _AddEditCompanyPageState extends State<AddEditCompanyPage> {
 
                         // Selected count indicator
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.primarySurface,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.check_circle_outline_rounded, size: 14, color: AppColors.primary),
+                              const Icon(
+                                Icons.check_circle_outline_rounded,
+                                size: 14,
+                                color: AppColors.primary,
+                              ),
                               const SizedBox(width: 6),
                               Text(
                                 '${_selectedProjectIds.length} of ${invProvider.projects.length} projects assigned',
@@ -516,71 +569,87 @@ class _AddEditCompanyPageState extends State<AddEditCompanyPage> {
                           )
                         else
                           ...invProvider.projects
-                              .where((p) =>
-                                  _projectSearchText.isEmpty ||
-                                  p.name.toLowerCase().contains(_projectSearchText) ||
-                                  p.city.toLowerCase().contains(_projectSearchText) ||
-                                  p.location.toLowerCase().contains(_projectSearchText))
+                              .where(
+                                (p) =>
+                                    _projectSearchText.isEmpty ||
+                                    p.name.toLowerCase().contains(
+                                      _projectSearchText,
+                                    ) ||
+                                    p.city.toLowerCase().contains(
+                                      _projectSearchText,
+                                    ) ||
+                                    p.location.toLowerCase().contains(
+                                      _projectSearchText,
+                                    ),
+                              )
                               .map((proj) {
-                            final isAssigned = _selectedProjectIds.contains(proj.id);
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 10),
-                              decoration: BoxDecoration(
-                                color: isAssigned ? AppColors.primarySurface : Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: isAssigned ? AppColors.primary : AppColors.borderLight,
-                                  width: isAssigned ? 1.5 : 1,
-                                ),
-                              ),
-                              child: CheckboxListTile(
-                                value: isAssigned,
-                                activeColor: AppColors.primary,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                secondary: Container(
-                                  width: 40,
-                                  height: 40,
+                                final isAssigned = _selectedProjectIds.contains(
+                                  proj.id,
+                                );
+                                return Container(
+                                  margin: const EdgeInsets.only(bottom: 10),
                                   decoration: BoxDecoration(
                                     color: isAssigned
-                                        ? AppColors.primary
-                                        : AppColors.borderLight,
-                                    borderRadius: BorderRadius.circular(8),
+                                        ? AppColors.primarySurface
+                                        : Colors.white,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: isAssigned
+                                          ? AppColors.primary
+                                          : AppColors.borderLight,
+                                      width: isAssigned ? 1.5 : 1,
+                                    ),
                                   ),
-                                  child: Icon(
-                                    Icons.business_center_rounded,
-                                    color: isAssigned ? Colors.white : AppColors.textSecondary,
-                                    size: 20,
+                                  child: CheckboxListTile(
+                                    value: isAssigned,
+                                    activeColor: AppColors.primary,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    secondary: Container(
+                                      width: 40,
+                                      height: 40,
+                                      decoration: BoxDecoration(
+                                        color: isAssigned
+                                            ? AppColors.primary
+                                            : AppColors.borderLight,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Icon(
+                                        Icons.business_center_rounded,
+                                        color: isAssigned
+                                            ? Colors.white
+                                            : AppColors.textSecondary,
+                                        size: 20,
+                                      ),
+                                    ),
+                                    title: Text(
+                                      proj.name,
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                    subtitle: Text(
+                                      '${proj.city} • ${proj.location} (ID: ${proj.id})',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 11,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                    onChanged: (bool? val) {
+                                      setState(() {
+                                        if (val == true) {
+                                          _selectedProjectIds.add(proj.id);
+                                        } else {
+                                          _selectedProjectIds.remove(proj.id);
+                                        }
+                                      });
+                                    },
                                   ),
-                                ),
-                                title: Text(
-                                  proj.name,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
-                                subtitle: Text(
-                                  '${proj.city} • ${proj.location} (ID: ${proj.id})',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 11,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                                onChanged: (bool? val) {
-                                  setState(() {
-                                    if (val == true) {
-                                      _selectedProjectIds.add(proj.id);
-                                    } else {
-                                      _selectedProjectIds.remove(proj.id);
-                                    }
-                                  });
-                                },
-                              ),
-                            );
-                          }),
+                                );
+                              }),
                       ],
                     ),
                     const SizedBox(height: 30),
@@ -590,10 +659,14 @@ class _AddEditCompanyPageState extends State<AddEditCompanyPage> {
                       width: double.infinity,
                       height: 52,
                       child: ElevatedButton(
-                        onPressed: companyProvider.isSubmitting ? null : _submitForm,
+                        onPressed: companyProvider.isSubmitting
+                            ? null
+                            : _submitForm,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                           elevation: 0,
                         ),
                         child: companyProvider.isSubmitting
@@ -609,7 +682,9 @@ class _AddEditCompanyPageState extends State<AddEditCompanyPage> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(
-                                    isEditing ? Icons.save_rounded : Icons.add_business_rounded,
+                                    isEditing
+                                        ? Icons.save_rounded
+                                        : Icons.add_business_rounded,
                                     color: Colors.white,
                                     size: 20,
                                   ),
@@ -658,7 +733,11 @@ class _AddEditCompanyPageState extends State<AddEditCompanyPage> {
               color: Colors.white.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.corporate_fare_rounded, color: Colors.white, size: 26),
+            child: const Icon(
+              Icons.corporate_fare_rounded,
+              color: Colors.white,
+              size: 26,
+            ),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -676,7 +755,9 @@ class _AddEditCompanyPageState extends State<AddEditCompanyPage> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  isEditing ? 'Modify Agency Access' : 'Register New Partner Agency',
+                  isEditing
+                      ? 'Modify Agency Access'
+                      : 'Register New Partner Agency',
                   style: GoogleFonts.poppins(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
@@ -782,11 +863,17 @@ class _AddEditCompanyPageState extends State<AddEditCompanyPage> {
           controller: controller,
           keyboardType: keyboardType,
           validator: validator,
-          style: GoogleFonts.poppins(fontSize: 13.5, color: AppColors.textPrimary),
+          style: GoogleFonts.poppins(
+            fontSize: 13.5,
+            color: AppColors.textPrimary,
+          ),
           decoration: InputDecoration(
             hintText: hint,
             prefixIcon: Icon(icon, color: AppColors.iconColor, size: 19),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 12,
+            ),
           ),
         ),
       ],
@@ -817,7 +904,11 @@ class _AddEditCompanyPageState extends State<AddEditCompanyPage> {
         ),
         child: Row(
           children: [
-            Icon(icon, color: isSelected ? color : AppColors.textMuted, size: 20),
+            Icon(
+              icon,
+              color: isSelected ? color : AppColors.textMuted,
+              size: 20,
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
@@ -877,7 +968,11 @@ class _AddEditCompanyPageState extends State<AddEditCompanyPage> {
                 color: AppColors.rejectedLight,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.lock_outline_rounded, color: AppColors.rejected, size: 48),
+              child: const Icon(
+                Icons.lock_outline_rounded,
+                color: AppColors.rejected,
+                size: 48,
+              ),
             ),
             const SizedBox(height: 20),
             Text(

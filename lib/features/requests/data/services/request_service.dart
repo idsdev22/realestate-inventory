@@ -10,11 +10,14 @@ class RequestService {
     String status = '',
     int page = 1,
     int limit = 1000,
+    int? userId,
   }) async {
     try {
-      final response = await _apiService.get(
-        '/requests?status=$status&page=$page&limit=$limit',
-      );
+      String url = '/requests?status=$status&page=$page&limit=$limit';
+      if (userId != null) {
+        url += '&user_id=$userId';
+      }
+      final response = await _apiService.get(url);
 
       if (response['success'] == true && response['data'] != null) {
         final data = response['data'];

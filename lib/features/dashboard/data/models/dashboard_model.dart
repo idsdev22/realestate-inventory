@@ -3,29 +3,33 @@ import '../../../projects/data/models/project_model.dart';
 
 class InventorySummary {
   final int available;
+  final int registered;
   final int booked;
-  final int blocked;
+  final int onHold;
   final int total;
 
   InventorySummary({
     this.available = 0,
+    this.registered = 0,
     this.booked = 0,
-    this.blocked = 0,
+    this.onHold = 0,
     this.total = 0,
   });
 
   factory InventorySummary.fromJson(Map<String, dynamic> json) {
     final available = _parseInt(json['available']);
+    final registered = _parseInt(json['registered']);
     final booked = _parseInt(json['booked']);
-    final blocked = _parseInt(json['blocked']);
+    final onHold = _parseInt(json['on_hold'] ?? json['onHold'] ?? json['blocked']);
     final total = _parseInt(json['total']) != 0
         ? _parseInt(json['total'])
-        : (available + booked + blocked);
+        : (available + registered + booked + onHold);
 
     return InventorySummary(
       available: available,
+      registered: registered,
       booked: booked,
-      blocked: blocked,
+      onHold: onHold,
       total: total,
     );
   }

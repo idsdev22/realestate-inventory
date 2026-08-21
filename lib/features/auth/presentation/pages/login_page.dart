@@ -15,8 +15,8 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final _emailController = TextEditingController(text: 'admin@syncr.test');
-  final _passwordController = TextEditingController(text: 'Admin@123');
+  final _emailController = TextEditingController(text: '');
+  final _passwordController = TextEditingController(text: '');
   final _formKey = GlobalKey<FormState>();
   UserRole _selectedRole = UserRole.admin;
 
@@ -31,11 +31,11 @@ class _LoginPageState extends State<LoginPage> {
     setState(() {
       _selectedRole = role;
       if (role == UserRole.admin) {
-        _emailController.text = 'admin@syncr.test';
+        _emailController.text = '';
       } else if (role == UserRole.marketingTeam) {
-        _emailController.text = 'abcmarketing@gmail.com';
+        _emailController.text = '';
       } else {
-        _emailController.text = 'staff@syncr.test';
+        _emailController.text = '';
       }
     });
   }
@@ -219,7 +219,8 @@ class _LoginPageState extends State<LoginPage> {
                                     ? Colors.white
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(9),
-                                boxShadow: _selectedRole == UserRole.marketingTeam
+                                boxShadow:
+                                    _selectedRole == UserRole.marketingTeam
                                     ? [
                                         BoxShadow(
                                           color: Colors.black.withValues(

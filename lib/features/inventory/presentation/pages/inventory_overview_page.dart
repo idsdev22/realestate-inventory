@@ -130,10 +130,10 @@ class _InventoryOverviewPageState extends State<InventoryOverviewPage> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: _buildSummaryBox(
-                    title: 'Blocked',
-                    value: '120',
-                    badgeColor: AppColors.blocked,
-                    textColor: AppColors.blocked,
+                    title: 'Booked',
+                    value: '320',
+                    badgeColor: AppColors.booked,
+                    textColor: AppColors.booked,
                   ),
                 ),
               ],
@@ -143,20 +143,15 @@ class _InventoryOverviewPageState extends State<InventoryOverviewPage> {
               children: [
                 Expanded(
                   child: _buildSummaryBox(
-                    title: 'Booked',
-                    value: '320',
-                    badgeColor: AppColors.booked,
-                    textColor: AppColors.booked,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _buildSummaryBox(
                     title: 'Registered',
                     value: '130',
                     badgeColor: AppColors.registered,
                     textColor: AppColors.registered,
                   ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: const SizedBox(),
                 ),
               ],
             ),
@@ -190,7 +185,6 @@ class _InventoryOverviewPageState extends State<InventoryOverviewPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   _buildLegendItem('Available', AppColors.available),
-                  _buildLegendItem('Blocked', AppColors.blocked),
                   _buildLegendItem('Booked', AppColors.booked),
                   _buildLegendItem('Registered', AppColors.registered),
                 ],
@@ -313,7 +307,6 @@ class _InventoryOverviewPageState extends State<InventoryOverviewPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _buildMetricDotItem('${project.availableUnits}', AppColors.available),
-                _buildMetricDotItem('${project.blockedUnits}', AppColors.blocked),
                 _buildMetricDotItem('${project.bookedUnits}', AppColors.booked),
                 _buildMetricDotItem('${project.registeredUnits}', AppColors.registered),
               ],

@@ -61,7 +61,12 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
 
   Future<void> _pickImage() async {
     try {
-      final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+      final pickedFile = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1600,
+        maxHeight: 1600,
+        imageQuality: 85,
+      );
       if (pickedFile != null) {
         setState(() {
           _selectedImage = pickedFile;
@@ -95,18 +100,6 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
     }
 
     if (_formKey.currentState?.validate() ?? false) {
-      String? uploadedImageUrl = _existingCoverImageUrl;
-
-      if (_selectedImage != null) {
-        final bytes = await _selectedImage!.readAsBytes();
-        final base64String = base64Encode(bytes);
-        final extension = _selectedImage!.name.split('.').last.toLowerCase();
-        final mimeType = extension == 'png'
-            ? 'image/png'
-            : (extension == 'webp' ? 'image/webp' : 'image/jpeg');
-        uploadedImageUrl = 'data:$mimeType;base64,$base64String';
-      }
-
       final newProject = ProjectModel(
         id:
             widget.project?.id ??
@@ -117,13 +110,20 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
         approvalDetails: _approvalController.text.trim(),
         description: _descriptionController.text.trim(),
         status: widget.project?.status ?? 'active',
-        coverImage: uploadedImageUrl,
+        coverImage: _existingCoverImageUrl,
       );
 
       final provider = context.read<InventoryProvider>();
       final success = widget.project != null
-          ? await provider.updateProject(widget.project!.id, newProject)
-          : await provider.addProject(newProject);
+          ? await provider.updateProject(
+              widget.project!.id,
+              newProject,
+              imageFile: _selectedImage,
+            )
+          : await provider.addProject(
+              newProject,
+              imageFile: _selectedImage,
+            );
 
       if (mounted) {
         if (success) {
@@ -273,18 +273,7 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
                               ))
                       : (_existingCoverImageUrl != null &&
                                 _existingCoverImageUrl!.isNotEmpty
-                            ? Image.network(
-                                _existingCoverImageUrl!,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return const Center(
-                                    child: Icon(
-                                      Icons.broken_image,
-                                      color: AppColors.textMuted,
-                                    ),
-                                  );
-                                },
-                              )
+                            ? _buildExistingImage(_existingCoverImageUrl!)
                             : Center(
                                 child: Text(
                                   'No image',
@@ -420,6 +409,49 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
           borderSide: const BorderSide(color: AppColors.rejected, width: 1.5),
         ),
       ),
+    );
+  }
+
+  Widget _buildExistingImage(String imageUrl) {
+    final cleanUrl = ProjectModel.sanitizeImage(imageUrl) ?? imageUrl;
+
+    if (cleanUrl.contains('data:image') || cleanUrl.contains(';base64,')) {
+      try {
+        final commaIndex = cleanUrl.indexOf(',');
+        final base64String = commaIndex != -1
+            ? cleanUrl.substring(commaIndex + 1)
+            : cleanUrl;
+        String cleanBase64 = base64String.replaceAll(RegExp(r'\s+'), '');
+        if (cleanBase64.contains('%')) {
+          cleanBase64 = Uri.decodeComponent(cleanBase64);
+        }
+        int padding = cleanBase64.length % 4;
+        if (padding > 0) {
+          cleanBase64 += '=' * (4 - padding);
+        }
+        return Image.memory(
+          base64Decode(cleanBase64),
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return const Center(
+              child: Icon(Icons.broken_image, color: AppColors.textMuted),
+            );
+          },
+        );
+      } catch (e) {
+        return const Center(
+          child: Icon(Icons.broken_image, color: AppColors.textMuted),
+        );
+      }
+    }
+    return Image.network(
+      cleanUrl,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) {
+        return const Center(
+          child: Icon(Icons.broken_image, color: AppColors.textMuted),
+        );
+      },
     );
   }
 }

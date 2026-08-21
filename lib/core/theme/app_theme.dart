@@ -13,10 +13,6 @@ class AppColors {
   static const Color availableLight = Color(0xFFECFDF5);
   static const Color availableDark = Color(0xFF059669);
 
-  static const Color blocked = Color(0xFFF59E0B); // Amber / Orange
-  static const Color blockedLight = Color(0xFFFFFBEB);
-  static const Color blockedDark = Color(0xFFD97706);
-
   static const Color booked = Color(0xFF3B82F6); // Blue
   static const Color bookedLight = Color(0xFFEFF6FF);
   static const Color bookedDark = Color(0xFF2563EB);
@@ -24,6 +20,10 @@ class AppColors {
   static const Color registered = Color(0xFF8B5CF6); // Violet / Purple
   static const Color registeredLight = Color(0xFFF5F3FF);
   static const Color registeredDark = Color(0xFF7C3AED);
+
+  static const Color onHold = Color(0xFFF59E0B); // Amber / Orange
+  static const Color onHoldLight = Color(0xFFFEF3E2);
+  static const Color onHoldDark = Color(0xFFD97706);
 
   static const Color rejected = Color(0xFFEF4444); // Red
   static const Color rejectedLight = Color(0xFFFEF2F2);
@@ -131,7 +131,10 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppColors.rejected, width: 1),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
         hintStyle: GoogleFonts.poppins(
           color: AppColors.textMuted,
           fontSize: 14,
@@ -150,7 +153,10 @@ class AppTheme {
             borderRadius: BorderRadius.circular(12),
           ),
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-          textStyle: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600),
+          textStyle: GoogleFonts.poppins(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -161,7 +167,10 @@ class AppTheme {
             borderRadius: BorderRadius.circular(12),
           ),
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-          textStyle: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600),
+          textStyle: GoogleFonts.poppins(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );

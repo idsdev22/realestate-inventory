@@ -79,10 +79,10 @@ class SyncrDrawer extends StatelessWidget {
                   Text(
                     authProvider.user?.email ??
                         (isPromoterAdmin
-                            ? 'admin@syncr.test'
+                            ? ''
                             : isMarketingAdmin
-                            ? 'abcmarketing@gmail.com'
-                            : 'staff@syncr.test'),
+                            ? ''
+                            : ''),
                     style: GoogleFonts.poppins(
                       fontSize: 13,
                       color: AppColors.textSecondary,

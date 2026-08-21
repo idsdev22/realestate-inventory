@@ -43,7 +43,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 Icon(Icons.mark_email_read, color: Colors.white, size: 20),
                 SizedBox(width: 8),
                 Expanded(
-                  child: Text('Password reset instructions sent to your email!'),
+                  child: Text(
+                    'Password reset instructions sent to your email!',
+                  ),
                 ),
               ],
             ),
@@ -51,7 +53,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         );
         Navigator.of(context).pop();
       } else {
-        final errorMsg = authProvider.errorMessage ?? 'Failed to send reset link.';
+        final errorMsg =
+            authProvider.errorMessage ?? 'Failed to send reset link.';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: AppColors.rejected,
@@ -78,7 +81,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+          icon: const Icon(
+            Icons.arrow_back_rounded,
+            color: AppColors.textPrimary,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
@@ -93,7 +99,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 24.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 28.0,
+              vertical: 24.0,
+            ),
             child: Form(
               key: _formKey,
               child: Column(
@@ -139,8 +148,11 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     labelText: 'Email Address',
-                    hintText: 'admin@syncr.test',
-                    prefixIcon: const Icon(Icons.email_outlined, color: AppColors.primary),
+                    hintText: '',
+                    prefixIcon: const Icon(
+                      Icons.email_outlined,
+                      color: AppColors.primary,
+                    ),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
                         return 'Please enter your email';

@@ -86,10 +86,10 @@ class AuthProvider extends ChangeNotifier {
             ? 'marketing_team_admin'
             : 'marketing_team_user',
         email: role == UserRole.admin
-            ? 'admin@syncr.test'
+            ? ''
             : role == UserRole.marketingTeam
-            ? 'abcmarketing@gmail.com'
-            : 'staff@syncr.test',
+            ? ''
+            : '',
         name: role == UserRole.admin
             ? 'Promoter Admin'
             : role == UserRole.marketingTeam

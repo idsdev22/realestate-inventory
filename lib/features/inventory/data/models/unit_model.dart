@@ -14,17 +14,20 @@ class UnitModel {
   final bool isPremium;
   final bool isCorner;
   final String? approvalDetails;
-  final String
-  status; // 'available', 'on_hold', 'blocked', 'booked', 'registered'
+  final String status; // 'available', 'on_hold', 'booked', 'registered'
   final String? remarks;
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final DateTime? deletedAt;
 
-  // These are UI-only fields that might not be in this table but used locally
+  // UI and request-related fields
   final bool isFavorite;
   final String? customerName;
   final String? customerPhone;
+  final String? customerEmail;
+  final String? expectedBookingDate;
+  final String? requestDate;
+  final bool hasBookingRequest;
 
   UnitModel({
     required this.id,
@@ -50,9 +53,37 @@ class UnitModel {
     this.isFavorite = false,
     this.customerName,
     this.customerPhone,
+    this.customerEmail,
+    this.expectedBookingDate,
+    this.requestDate,
+    this.hasBookingRequest = false,
   });
 
   factory UnitModel.fromJson(Map<String, dynamic> json) {
+    final rawStatus = (json['status'] ?? 'available').toString();
+    final customerName =
+        json['customer_name'] ??
+        json['requested_by'] ??
+        json['customer']?['name'] ??
+        json['request']?['customer_name'] ??
+        json['active_request']?['customer_name'];
+    final hasBookingReq =
+        json['has_booking_request'] == 1 ||
+        json['has_booking_request'] == true ||
+        json['request'] != null ||
+        json['active_request'] != null ||
+        (customerName != null &&
+            customerName.toString().trim().isNotEmpty &&
+            rawStatus.toLowerCase() == 'available');
+
+    // If unit has a pending request or was marked on_hold, ensure Available status is shown
+    final normalizedStatus =
+        (rawStatus.toLowerCase() == 'on_hold' ||
+                rawStatus.toLowerCase() == 'on hold') &&
+            (customerName != null || hasBookingReq)
+        ? 'available'
+        : rawStatus;
+
     return UnitModel(
       id: json['id'] is int
           ? json['id']
@@ -74,7 +105,7 @@ class UnitModel {
       isPremium: json['is_premium'] == 1 || json['is_premium'] == true,
       isCorner: json['is_corner'] == 1 || json['is_corner'] == true,
       approvalDetails: json['approval_details'],
-      status: json['status'] ?? 'available',
+      status: normalizedStatus,
       remarks: json['remarks'],
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'])
@@ -86,8 +117,28 @@ class UnitModel {
           ? DateTime.tryParse(json['deleted_at'])
           : null,
       isFavorite: json['is_favorite'] == 1 || json['is_favorite'] == true,
-      customerName: json['customer_name'],
-      customerPhone: json['customer_phone'],
+      customerName: customerName?.toString(),
+      customerPhone:
+          (json['customer_phone'] ??
+                  json['customer']?['phone'] ??
+                  json['request']?['customer_phone'])
+              ?.toString(),
+      customerEmail:
+          (json['customer_email'] ??
+                  json['customer']?['email'] ??
+                  json['request']?['customer_email'])
+              ?.toString(),
+      expectedBookingDate:
+          (json['expected_booking_date'] ??
+                  json['booking_date'] ??
+                  json['request']?['expected_booking_date'])
+              ?.toString(),
+      requestDate:
+          (json['request_date'] ??
+                  json['requested_date'] ??
+                  json['request']?['created_at'])
+              ?.toString(),
+      hasBookingRequest: hasBookingReq,
     );
   }
 
@@ -108,6 +159,12 @@ class UnitModel {
       'approval_details': approvalDetails,
       'status': status,
       'remarks': remarks,
+      if (customerName != null) 'customer_name': customerName,
+      if (customerPhone != null) 'customer_phone': customerPhone,
+      if (customerEmail != null) 'customer_email': customerEmail,
+      if (expectedBookingDate != null)
+        'expected_booking_date': expectedBookingDate,
+      if (hasBookingRequest) 'has_booking_request': 1,
     };
     if (id != 0) {
       map['id'] = id;
@@ -162,6 +219,10 @@ class UnitModel {
     bool? isFavorite,
     String? customerName,
     String? customerPhone,
+    String? customerEmail,
+    String? expectedBookingDate,
+    String? requestDate,
+    bool? hasBookingRequest,
   }) {
     return UnitModel(
       id: id ?? this.id,
@@ -187,6 +248,10 @@ class UnitModel {
       isFavorite: isFavorite ?? this.isFavorite,
       customerName: customerName ?? this.customerName,
       customerPhone: customerPhone ?? this.customerPhone,
+      customerEmail: customerEmail ?? this.customerEmail,
+      expectedBookingDate: expectedBookingDate ?? this.expectedBookingDate,
+      requestDate: requestDate ?? this.requestDate,
+      hasBookingRequest: hasBookingRequest ?? this.hasBookingRequest,
     );
   }
 }

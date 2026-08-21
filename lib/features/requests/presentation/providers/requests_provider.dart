@@ -24,13 +24,21 @@ class RequestsProvider extends ChangeNotifier {
 
   List<BlockRequestModel> get filteredRequests {
     if (_selectedTab == 'All') return _requests;
-    return _requests.where((r) => r.status.toLowerCase() == _selectedTab.toLowerCase()).toList();
+    final tabLower = _selectedTab.toLowerCase().trim();
+    if (tabLower == 'booked' || tabLower == 'approved') {
+      return _requests.where((r) => r.status.toLowerCase() == 'booked' || r.status.toLowerCase() == 'approved').toList();
+    }
+    if (tabLower == 'on hold' || tabLower == 'on_hold') {
+      return _requests.where((r) => r.status.toLowerCase() == 'on_hold' || r.status.toLowerCase() == 'on hold').toList();
+    }
+    return _requests.where((r) => r.status.toLowerCase() == tabLower).toList();
   }
 
   int get countAll => _requests.length;
   int get countPending => _requests.where((r) => r.status.toLowerCase() == 'pending').length;
-  int get countApproved => _requests.where((r) => r.status.toLowerCase() == 'approved').length;
+  int get countBooked => _requests.where((r) => r.status.toLowerCase() == 'booked' || r.status.toLowerCase() == 'approved').length;
   int get countRejected => _requests.where((r) => r.status.toLowerCase() == 'rejected').length;
+  int get countOnHold => _requests.where((r) => r.status.toLowerCase() == 'on_hold' || r.status.toLowerCase() == 'on hold').length;
 
   void setSelectedTab(String tab) {
     if (_selectedTab != tab) {
@@ -44,7 +52,7 @@ class RequestsProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> fetchRequests({bool refresh = false}) async {
+  Future<void> fetchRequests({bool refresh = false, int? userId}) async {
     if (refresh) {
       _currentPage = 1;
       _hasMore = true;
@@ -62,6 +70,7 @@ class RequestsProvider extends ChangeNotifier {
         status: '', // Fetch all for "My Requests" and filter locally
         page: _currentPage,
         limit: 20, // slightly higher limit to ensure enough for local filtering
+        userId: userId,
       );
 
       if (newRequests.isEmpty) {
@@ -162,9 +171,10 @@ class RequestsProvider extends ChangeNotifier {
         decision: decision,
         reviewNotes: reviewNotes,
       );
+      final finalStatus = decision.toLowerCase() == 'approved' ? 'Booked' : decision.toLowerCase() == 'rejected' ? 'Rejected' : reviewed.status;
       final index = _requests.indexWhere((r) => r.id == id);
       if (index != -1) {
-        _requests[index] = reviewed;
+        _requests[index] = reviewed.copyWith(status: finalStatus);
       }
       return true;
     } on ApiException catch (e) {

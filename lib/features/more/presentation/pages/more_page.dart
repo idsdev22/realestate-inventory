@@ -7,8 +7,6 @@ import '../../../activity/presentation/pages/activity_log_page.dart';
 import '../../../auth/presentation/pages/login_page.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../company_admin/presentation/pages/companies_list_page.dart';
-import '../../../company_admin/presentation/pages/company_admin_page.dart';
-import '../../../inventory/presentation/pages/inventory_overview_page.dart';
 import '../../../requests/presentation/pages/all_requests_page.dart';
 import '../../../requests/presentation/pages/my_requests_page.dart';
 import '../../../users/presentation/pages/users_list_page.dart';
@@ -175,32 +173,19 @@ class MorePage extends StatelessWidget {
                       );
                     },
                   ),
-                  _buildMenuItem(
-                    icon: Icons.admin_panel_settings_outlined,
-                    title: 'Promoter Admin Console',
-                    subtitle: 'System dashboard & company operations overview',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const CompanyAdminPage(),
-                        ),
-                      );
-                    },
-                  ),
-                  _buildMenuItem(
-                    icon: Icons.pie_chart_outline_rounded,
-                    title: 'Inventory Overview',
-                    subtitle: 'Status breakdown & analytics',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const InventoryOverviewPage(),
-                        ),
-                      );
-                    },
-                  ),
+                  // _buildMenuItem(
+                  //   icon: Icons.admin_panel_settings_outlined,
+                  //   title: 'Promoter Admin Console',
+                  //   subtitle: 'System dashboard & company operations overview',
+                  //   onTap: () {
+                  //     Navigator.push(
+                  //       context,
+                  //       MaterialPageRoute(
+                  //         builder: (_) => const CompanyAdminPage(),
+                  //       ),
+                  //     );
+                  //   },
+                  // ),
                   _buildMenuItem(
                     icon: Icons.history_rounded,
                     title: 'Activity Log',

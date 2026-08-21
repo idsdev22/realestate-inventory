@@ -56,12 +56,7 @@ class _AddEditUnitPageState extends State<AddEditUnitPage> {
 
   final List<String> _roadWidths = ['30 ft', '40 ft', '60 ft', '80 ft'];
 
-  final List<String> _statuses = [
-    'Available',
-    'Blocked',
-    'Booked',
-    'Registered',
-  ];
+  final List<String> _statuses = ['Available', 'Registered', 'Booked', 'On Hold'];
 
   final List<String> _blocks = ['A Block', 'B Block', 'C Block', 'D Block'];
 
@@ -78,7 +73,21 @@ class _AddEditUnitPageState extends State<AddEditUnitPage> {
     _selectedRoadWidth = edit?.roadWidthFt?.toString() ?? '30';
     if (!_roadWidths.contains('$_selectedRoadWidth ft'))
       _selectedRoadWidth = '30';
-    _selectedStatus = edit?.status ?? _statuses.first;
+    
+    final editStatus = edit?.status;
+    if (editStatus != null) {
+      final lower = editStatus.toLowerCase().trim();
+      if (lower == 'on_hold' || lower == 'on hold' || lower == 'hold' || lower == 'blocked') {
+        _selectedStatus = 'On Hold';
+      } else {
+        _selectedStatus = _statuses.firstWhere(
+          (s) => s.toLowerCase() == lower,
+          orElse: () => _statuses.first,
+        );
+      }
+    } else {
+      _selectedStatus = _statuses.first;
+    }
 
     _projectController = TextEditingController(text: _selectedProject);
     _unitNoController = TextEditingController(text: edit?.unitNo ?? '');
@@ -139,7 +148,6 @@ class _AddEditUnitPageState extends State<AddEditUnitPage> {
 
     if (_formKey.currentState?.validate() ?? false) {
       final inventoryProvider = context.read<InventoryProvider>();
-
 
       final isEdit = widget.unitToEdit != null;
       final targetProjectId =

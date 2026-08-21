@@ -17,7 +17,7 @@ class BulkActionsPage extends StatefulWidget {
 
 class _BulkActionsPageState extends State<BulkActionsPage> {
   String _selectedAction = 'Change Status';
-  String _newStatus = 'Blocked';
+  String _newStatus = 'Available';
   final TextEditingController _remarksController = TextEditingController();
   late Set<int> _activeSelectedIds;
 
@@ -29,9 +29,9 @@ class _BulkActionsPageState extends State<BulkActionsPage> {
 
   final List<String> _statuses = [
     'Available',
-    'Blocked',
-    'Booked',
     'Registered',
+    'Booked',
+    'On Hold',
   ];
 
   @override

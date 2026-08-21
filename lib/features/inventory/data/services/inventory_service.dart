@@ -13,7 +13,9 @@ class InventoryService {
     String? status,
     String? projectId,
   }) async {
-    final statusQuery = (status != null && status != 'All') ? status.toLowerCase() : '';
+    final statusQuery = (status != null && status != 'All')
+        ? (status.toLowerCase().trim() == 'on hold' ? 'on_hold' : status.toLowerCase().trim())
+        : '';
     final projectQuery = (projectId != null && projectId != '-1') ? projectId : '';
     final queryParams = '?page=$page&limit=$limit&q=$q&status=$statusQuery&project_id=$projectQuery';
     final response = await _apiService.get('/inventory$queryParams');

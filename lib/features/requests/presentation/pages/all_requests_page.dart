@@ -6,6 +6,7 @@ import '../../../../core/widgets/syncr_badge.dart';
 import '../../data/models/block_request_model.dart';
 import '../providers/all_requests_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../inventory/presentation/providers/inventory_provider.dart';
 
 class AllRequestsPage extends StatefulWidget {
   const AllRequestsPage({super.key});
@@ -126,10 +127,36 @@ class _AllRequestsPageState extends State<AllRequestsPage> {
                             child: ElevatedButton(
                               onPressed: () async {
                                 final success = await context.read<AllRequestsProvider>().reviewRequest(request.id, 'approved');
-                                if (success && ctx.mounted) Navigator.pop(ctx);
+                                if (success && ctx.mounted) {
+                                  // Update unit in InventoryProvider to Booked
+                                  final invProvider = context.read<InventoryProvider>();
+                                  final unitIndex = invProvider.units.indexWhere(
+                                    (u) => u.unitNo.toLowerCase() == request.unitNo.toLowerCase() || u.id.toString() == request.id,
+                                  );
+                                  if (unitIndex != -1) {
+                                    final unit = invProvider.units[unitIndex];
+                                    invProvider.updateUnit(
+                                      unit.copyWith(
+                                        status: 'Booked',
+                                        hasBookingRequest: false,
+                                        customerName: request.customerName,
+                                        customerPhone: request.customerPhone,
+                                        customerEmail: request.customerEmail,
+                                        expectedBookingDate: request.expectedBookingDate,
+                                      ),
+                                    );
+                                  }
+                                  Navigator.pop(ctx);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      backgroundColor: AppColors.available,
+                                      content: Text('Request accepted and marked as Booked!'),
+                                    ),
+                                  );
+                                }
                               },
                               style: ElevatedButton.styleFrom(backgroundColor: AppColors.available),
-                              child: const Text('Approve'),
+                              child: const Text('Approve & Book', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
                             ),
                           ),
                         ],
@@ -259,10 +286,10 @@ class _AllRequestsPageState extends State<AllRequestsPage> {
                   const SizedBox(width: 8),
                   _buildTab(
                     context,
-                    label: 'Approved',
-                    tab: 'Approved',
-                    isSelected: provider.selectedTab == 'Approved',
-                    activeColor: AppColors.available,
+                    label: 'Booked',
+                    tab: 'Booked',
+                    isSelected: provider.selectedTab == 'Booked',
+                    activeColor: AppColors.booked,
                   ),
                   const SizedBox(width: 8),
                   _buildTab(
@@ -416,7 +443,7 @@ class _AllRequestsPageState extends State<AllRequestsPage> {
 
               // Date Info
               Text(
-                '${req.status == 'Pending' ? 'Request on' : req.status == 'Approved' ? 'Approved on' : 'Rejected on'} ${req.requestedDate}',
+                '${req.status == 'Pending' ? 'Request on' : req.status == 'Booked' || req.status == 'Approved' ? 'Booked on' : req.status == 'On Hold' ? 'Held on' : 'Rejected on'} ${req.requestedDate}',
                 style: GoogleFonts.poppins(
                   fontSize: 12,
                   color: AppColors.textMuted,

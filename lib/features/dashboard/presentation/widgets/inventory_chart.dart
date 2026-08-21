@@ -6,11 +6,7 @@ class InventoryChart extends StatefulWidget {
   final DashboardChartsModel? chartsData;
   final InventorySummary? inventorySummary;
 
-  const InventoryChart({
-    super.key,
-    this.chartsData,
-    this.inventorySummary,
-  });
+  const InventoryChart({super.key, this.chartsData, this.inventorySummary});
 
   @override
   State<InventoryChart> createState() => _InventoryChartState();
@@ -27,24 +23,30 @@ class _InventoryChartState extends State<InventoryChart> {
     // Default fallback from inventory summary if status_pie is empty
     final inv = widget.inventorySummary;
     final available = inv?.available ?? 6;
+    final registered = inv?.registered ?? 3;
     final booked = inv?.booked ?? 4;
-    final blocked = inv?.blocked ?? 2;
+    final onHold = inv?.onHold ?? 2;
 
     return [
       StatusPieItem(
         status: 'Available',
         count: available.toDouble(),
-        color: const Color(0xFF1E88E5),
+        color: const Color(0xFF10B981),
+      ),
+      StatusPieItem(
+        status: 'Registered',
+        count: registered.toDouble(),
+        color: const Color(0xFF8B5CF6),
       ),
       StatusPieItem(
         status: 'Booked',
         count: booked.toDouble(),
-        color: const Color(0xFF43A047),
+        color: const Color(0xFF3B82F6),
       ),
       StatusPieItem(
-        status: 'Blocked',
-        count: blocked.toDouble(),
-        color: const Color(0xFFFB8C00),
+        status: 'On Hold',
+        count: onHold.toDouble(),
+        color: const Color(0xFFF59E0B),
       ),
     ];
   }
@@ -88,15 +90,15 @@ class _InventoryChartState extends State<InventoryChart> {
                   SizedBox(height: 2),
                   Text(
                     'Real-time units distribution',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey,
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
                   ),
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF1E88E5).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
@@ -138,7 +140,8 @@ class _InventoryChartState extends State<InventoryChart> {
                                     return;
                                   }
                                   touchedIndex = pieTouchResponse
-                                      .touchedSection!.touchedSectionIndex;
+                                      .touchedSection!
+                                      .touchedSectionIndex;
                                 });
                               },
                             ),
@@ -151,7 +154,8 @@ class _InventoryChartState extends State<InventoryChart> {
                               final radius = isTouched ? 54.0 : 46.0;
                               final item = items[i];
                               final percentage = totalCount > 0
-                                  ? ((item.count / totalCount) * 100).toStringAsFixed(0)
+                                  ? ((item.count / totalCount) * 100)
+                                        .toStringAsFixed(0)
                                   : '0';
 
                               return PieChartSectionData(
@@ -177,7 +181,9 @@ class _InventoryChartState extends State<InventoryChart> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: items.map((item) {
                             return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 4.0),
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 4.0,
+                              ),
                               child: Row(
                                 children: [
                                   Container(

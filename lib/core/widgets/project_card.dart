@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../features/projects/data/models/project_model.dart';
@@ -46,24 +47,7 @@ class ProjectCard extends StatelessWidget {
               // Project Image Thumbnail
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: Image.network(
-                  project.imageUrl,
-                  width: 76,
-                  height: 76,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      width: 76,
-                      height: 76,
-                      color: AppColors.primaryLight,
-                      child: const Icon(
-                        Icons.apartment_rounded,
-                        color: AppColors.primary,
-                        size: 36,
-                      ),
-                    );
-                  },
-                ),
+                child: _buildCoverImage(project.imageUrl),
               ),
               const SizedBox(width: 14),
 
@@ -199,6 +183,53 @@ class ProjectCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildCoverImage(String imageUrl) {
+    final cleanUrl = ProjectModel.sanitizeImage(imageUrl) ?? imageUrl;
+    Widget fallback = Container(
+      width: 76,
+      height: 76,
+      color: AppColors.primaryLight,
+      child: const Icon(
+        Icons.apartment_rounded,
+        color: AppColors.primary,
+        size: 32,
+      ),
+    );
+
+    if (cleanUrl.contains('data:image') || cleanUrl.contains(';base64,')) {
+      try {
+        final commaIndex = cleanUrl.indexOf(',');
+        final base64String = commaIndex != -1
+            ? cleanUrl.substring(commaIndex + 1)
+            : cleanUrl;
+        String cleanBase64 = base64String.replaceAll(RegExp(r'\s+'), '');
+        if (cleanBase64.contains('%')) {
+          cleanBase64 = Uri.decodeComponent(cleanBase64);
+        }
+        int padding = cleanBase64.length % 4;
+        if (padding > 0) {
+          cleanBase64 += '=' * (4 - padding);
+        }
+        return Image.memory(
+          base64Decode(cleanBase64),
+          width: 76,
+          height: 76,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => fallback,
+        );
+      } catch (e) {
+        return fallback;
+      }
+    }
+    return Image.network(
+      cleanUrl,
+      width: 76,
+      height: 76,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) => fallback,
     );
   }
 }
