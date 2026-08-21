@@ -151,9 +151,11 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      final fcmToken = _storageService.getFcmToken();
       final response = await _authService.login(
         email: email,
         password: password,
+        fcmToken: fcmToken,
       );
 
       if (response.success && response.token != null) {

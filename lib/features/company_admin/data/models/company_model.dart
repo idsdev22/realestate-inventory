@@ -34,6 +34,7 @@ class CompanyModel {
   final String status;
   final List<String> permissions;
   final List<int> projectIds;
+  final String? fcmToken;
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final int? userCount;
@@ -55,6 +56,7 @@ class CompanyModel {
       'manage_users',
     ],
     this.projectIds = const [],
+    this.fcmToken,
     this.createdAt,
     this.updatedAt,
     this.userCount,
@@ -135,6 +137,7 @@ class CompanyModel {
           ? parsedPermissions
           : const ['view_inventory', 'submit_block_requests', 'manage_users'],
       projectIds: parsedProjectIds,
+      fcmToken: json['fcm_token']?.toString(),
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'].toString())
           : null,
@@ -161,6 +164,7 @@ class CompanyModel {
       'status': status,
       'permissions': permissions,
       'project_ids': projectIds,
+      if (fcmToken != null && fcmToken!.isNotEmpty) 'fcm_token': fcmToken,
     };
   }
 
@@ -174,6 +178,7 @@ class CompanyModel {
     String? status,
     List<String>? permissions,
     List<int>? projectIds,
+    String? fcmToken,
     DateTime? createdAt,
     DateTime? updatedAt,
     int? userCount,
@@ -191,6 +196,7 @@ class CompanyModel {
       status: status ?? this.status,
       permissions: permissions ?? this.permissions,
       projectIds: projectIds ?? this.projectIds,
+      fcmToken: fcmToken ?? this.fcmToken,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       userCount: userCount ?? this.userCount,

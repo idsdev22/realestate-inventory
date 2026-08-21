@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import '../../../../core/services/fcm_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../inventory/presentation/providers/inventory_provider.dart';
@@ -108,6 +109,7 @@ class _AddEditCompanyPageState extends State<AddEditCompanyPage> {
       status: _status,
       permissions: _selectedPermissions.toList(),
       projectIds: _selectedProjectIds.toList(),
+      fcmToken: !isEditing ? FcmService().fcmToken : null,
     );
 
     final companyProvider = context.read<CompanyProvider>();

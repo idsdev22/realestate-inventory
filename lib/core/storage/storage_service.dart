@@ -6,6 +6,7 @@ class StorageService {
   static const String _keyToken = 'auth_token';
   static const String _keyUser = 'auth_user';
   static const String _keyExpiresIn = 'auth_expires_in';
+  static const String _keyFcmToken = 'fcm_token';
 
   final SharedPreferences _prefs;
 
@@ -61,6 +62,19 @@ class StorageService {
 
   Future<bool> removeUser() async {
     return await _prefs.remove(_keyUser);
+  }
+
+  // FCM Token methods
+  Future<bool> saveFcmToken(String token) async {
+    return await _prefs.setString(_keyFcmToken, token);
+  }
+
+  String? getFcmToken() {
+    return _prefs.getString(_keyFcmToken);
+  }
+
+  Future<bool> removeFcmToken() async {
+    return await _prefs.remove(_keyFcmToken);
   }
 
   // Clear all auth data

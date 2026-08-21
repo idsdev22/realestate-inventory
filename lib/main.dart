@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/network/api_service.dart';
+import 'core/services/fcm_service.dart';
 import 'core/storage/storage_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/data/services/auth_service.dart';
@@ -26,6 +27,9 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final storageService = await StorageService.init();
+
+  // Initialize Firebase FCM Service
+  await FcmService().initialize(storageService: storageService);
   final apiService = ApiService(storageService: storageService);
   final authService = AuthService(apiService);
   final dashboardService = DashboardService(apiService);

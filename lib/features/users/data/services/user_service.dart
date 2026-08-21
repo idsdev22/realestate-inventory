@@ -77,9 +77,10 @@ class UserService {
   ///   "project_ids": [1]
   /// }
   Future<UserModel> createUser(Map<String, dynamic> payload) async {
+    final body = Map<String, dynamic>.from(payload);
     final response = await _apiService.post(
       '/users',
-      body: payload,
+      body: body,
     );
 
     if (response is Map<String, dynamic>) {

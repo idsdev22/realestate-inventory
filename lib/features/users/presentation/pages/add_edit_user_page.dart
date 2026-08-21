@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import '../../../../core/services/fcm_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../auth/data/models/user_model.dart';
 import '../../../company_admin/presentation/providers/company_provider.dart';
@@ -165,6 +166,13 @@ class _AddEditUserPageState extends State<AddEditUserPage> {
 
     if (_passwordController.text.isNotEmpty) {
       payload['password'] = _passwordController.text;
+    }
+
+    if (!widget.isEditing) {
+      final token = FcmService().fcmToken;
+      if (token != null && token.isNotEmpty) {
+        payload['fcm_token'] = token;
+      }
     }
 
     final userProvider = context.read<UserProvider>();

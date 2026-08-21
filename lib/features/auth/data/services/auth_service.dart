@@ -10,13 +10,19 @@ class AuthService {
   Future<AuthResponseModel> login({
     required String email,
     required String password,
+    String? fcmToken,
   }) async {
+    final body = <String, dynamic>{
+      'email': email,
+      'password': password,
+    };
+    if (fcmToken != null && fcmToken.isNotEmpty) {
+      body['fcm_token'] = fcmToken;
+    }
+
     final response = await _apiService.post(
       ApiConstants.login,
-      body: {
-        'email': email,
-        'password': password,
-      },
+      body: body,
     );
 
     if (response is Map<String, dynamic>) {
